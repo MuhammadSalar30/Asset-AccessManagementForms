@@ -1,0 +1,580 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ form.title }}</title>
+
+    <style>
+
+        :root {
+            --purple: #673ab7;
+            --purple-light: #f3e8fd;
+            --border: #dadce0;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 16px;
+            background: #f0ebf8;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            color: var(--text-dark);
+        }
+
+        .form-wrapper {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            background: #fff;
+            border-top: 10px solid var(--purple);
+            border: 1px solid var(--border);
+            border-top: 10px solid var(--purple);
+            border-radius: 8px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+        }
+
+        .form-header h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .form-header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .block {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px 32px;
+            margin-bottom: 20px;
+        }
+
+        .block:hover {
+            border-color: #c4c7c5;
+        }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0 0 16px;
+        }
+
+        .required-star {
+            color: #d93025;
+            margin-left: 2px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 8px 0;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            font-family: inherit;
+            background: transparent;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-bottom: 2px solid var(--purple);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+
+        .option-row input[type="radio"],
+        .option-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--purple);
+            cursor: pointer;
+        }
+
+        .option-row label {
+            cursor: pointer;
+        }
+
+        .section-block {
+            background: var(--purple-light);
+            border: none;
+            border-left: 4px solid var(--purple);
+        }
+
+        .section-block h2 {
+            margin: 0 0 6px;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--purple);
+        }
+
+        .section-block p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .text-block h3 {
+            margin: 0 0 8px;
+            font-size: 17px;
+            font-weight: 500;
+        }
+
+        .text-block p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .image-block {
+            padding: 16px 32px;
+            text-align: center;
+        }
+
+        .image-block img {
+            max-width: 100%;
+            border-radius: 6px;
+        }
+
+        .submit-row {
+            display: flex;
+            justify-content: flex-start;
+            padding: 8px 4px 40px;
+        }
+
+        .submit-btn {
+            background: var(--purple);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .submit-btn:disabled {
+            background: #c4c7c5;
+            cursor: not-allowed;
+        }
+
+        .submit-btn:not(:disabled):hover {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .dropdown-select { padding: 8px; border: 1px solid var(--border); border-radius: 4px; width: 100%; max-width: 300px; }
+.file-upload-box { border: 2px dashed var(--border); padding: 20px; border-radius: 6px; text-align: center; }
+.file-hint { display: block; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.linear-scale-row { display: flex; align-items: center; gap: 16px; justify-content: space-between; }
+.scale-edge-label { font-size: 12px; color: var(--text-muted); max-width: 100px; }
+.scale-point { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 13px; }
+.grid-wrapper { overflow-x: auto; margin-top: 8px; }
+.grid-table { border-collapse: collapse; width: 100%; min-width: 400px; }
+.grid-table th, .grid-table td { padding: 12px; text-align: center; border-bottom: 1px solid var(--border); font-size: 13px; }
+.grid-table th { color: var(--text-muted); font-weight: 500; }
+.grid-row-label { text-align: left; font-weight: 500; color: var(--text-dark); }
+.grid-table input[type="radio"], .grid-table input[type="checkbox"] { accent-color: var(--purple); width: 18px; height: 18px; cursor: pointer; }
+.block.has-error { border-color: #d93025; }
+.field-error { color: #d93025; font-size: 13px; margin: 10px 0 0; min-height: 0; }
+.field-error:empty { display: none; }
+.form-banner { background: #fce8e6; color: #d93025; border: 1px solid #f5c6c2; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
+.success-panel { text-align: center; padding: 40px 32px; }
+.success-panel h2 { margin: 0 0 8px; color: var(--purple); font-weight: 500; }
+.success-panel a { color: var(--purple); font-size: 14px; }
+.submit-note { margin-left: 12px; font-size: 13px; color: var(--text-muted); align-self: center; }
+
+    </style>
+</head>
+ <!---  <body>
+
+    <div class="form-wrapper">
+
+        <div class="form-header">
+            <h1>{{ form.title }}</h1>
+            {% if form.description %}
+                <p>{{ form.description }}</p>
+            {% endif %}
+        </div>
+
+        <form method="post" action="">
+            {% csrf_token %}
+
+            {% for element in elements %}
+
+                {% if element.element_type == "question" %}
+              
+    <div class="block">
+        <p class="question-text">
+            {{ element.question_text }}
+            {% if element.is_required %}<span class="required-star">*</span>{% endif %}
+        </p>
+
+        {% if element.question_type == "short" %}
+            <input type="text" name="answer_{{ element.element_id }}" {% if element.is_required %}required{% endif %}>
+
+        {% elif element.question_type == "paragraph" %}
+            <textarea name="answer_{{ element.element_id }}" {% if element.is_required %}required{% endif %}></textarea>
+
+        {% elif element.question_type == "mcq" %}
+            {% for option in element.options.all %}
+                <div class="option-row">
+                    <input type="radio" id="opt-{{ option.option_id }}" name="answer_{{ element.element_id }}"
+                           value="{{ option.option_text }}" {% if element.is_required %}required{% endif %}>
+                    <label for="opt-{{ option.option_id }}">{{ option.option_text }}</label>
+                </div>
+            {% endfor %}
+
+        {% elif element.question_type == "checkbox" %}
+            {% for option in element.options.all %}
+                <div class="option-row">
+                    <input type="checkbox" id="opt-{{ option.option_id }}" name="answer_{{ element.element_id }}"
+                           value="{{ option.option_text }}">
+                    <label for="opt-{{ option.option_id }}">{{ option.option_text }}</label>
+                </div>
+            {% endfor %}
+
+        {% elif element.question_type == "dropdown" %}
+            <select name="answer_{{ element.element_id }}" class="dropdown-select" {% if element.is_required %}required{% endif %}>
+                <option value="" disabled selected>Choose</option>
+                {% for option in element.options.all %}
+                    <option value="{{ option.option_text }}">{{ option.option_text }}</option>
+                {% endfor %}
+            </select>
+
+        {% elif element.question_type == "file_upload" %}
+            <div class="file-upload-box">
+                <input type="file" name="answer_{{ element.element_id }}"
+                       {% if element.max_files > 1 %}multiple{% endif %}
+                       {% if element.is_required %}required{% endif %}>
+                <span class="file-hint">Up to {{ element.max_files }} file(s)</span>
+            </div>
+
+        {% elif element.question_type == "linear_scale" %}
+            <div class="linear-scale-row">
+                {% if element.scale_min_label %}<span class="scale-edge-label">{{ element.scale_min_label }}</span>{% endif %}
+                
+                {% for i in element.scale_range %}
+                    <label class="scale-point">
+                        <input type="radio" name="answer_{{ element.element_id }}" value="{{ i }}" {% if element.is_required %}required{% endif %}>
+                        <span>{{ i }}</span>
+                    </label>
+                {% endfor %}
+                {% if element.scale_max_label %}<span class="scale-edge-label">{{ element.scale_max_label }}</span>{% endif %}
+            </div>
+
+        {% elif element.question_type == "mcq_grid" or element.question_type == "checkbox_grid" %}
+            <div class="grid-wrapper">
+                <table class="grid-table">
+                    <tr>
+                        <th></th>
+                        {% for col in element.options.all %}
+                            <th>{{ col.option_text }}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for row in element.grid_rows.splitlines %}
+                        <tr>
+                            <td class="grid-row-label">{{ row }}</td>
+                            {% for col in element.options.all %}
+                                <td>
+                                    <input type="{% if element.question_type == 'mcq_grid' %}radio{% else %}checkbox{% endif %}"
+                                           name="answer_{{ element.element_id }}_{{ forloop.parentloop.counter }}"
+                                           value="{{ col.option_text }}">
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        {% elif element.question_type == "date" %}
+            <input type="date" name="answer_{{ element.element_id }}" {% if element.is_required %}required{% endif %}>
+
+        {% elif element.question_type == "time" %}
+            <input type="time" name="answer_{{ element.element_id }}" {% if element.is_required %}required{% endif %}>
+
+        {% endif %}
+    </div>
+
+                       
+
+                {% elif element.element_type == "text" %}
+                    <div class="block text-block">
+                        <h3>{{ element.title }}</h3>
+                        <p>{{ element.description }}</p>
+                    </div>
+
+                {% elif element.element_type == "sec" %}
+                    <div class="block section-block">
+                        <h2>{{ element.title }}</h2>
+                        <p>{{ element.description }}</p>
+                    </div>
+
+                {% elif element.element_type == "image" %}
+                    <div class="block image-block">
+                        {% if element.image %}
+                            <img src="{{ element.image.url }}" alt="Form image">
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+            {% endfor %}
+
+            <div class="submit-row">
+                <button type="submit" class="submit-btn" disabled title="Submission isn't wired up yet">Submit</button>
+            </div>
+
+        </form>
+
+    </div>
+
+</body>  -->
+<body>
+
+<div class="form-wrapper">
+
+    <div class="form-header">
+        <h1>{{ form.title }}</h1>
+        {% if form.description %}<p>{{ form.description }}</p>{% endif %}
+    </div>
+
+    <div id="successPanel" class="block success-panel" style="display:none;">
+        <h2>Response recorded</h2>
+        <p>Thanks! Your response has been submitted.</p>
+        <a href="#" onclick="location.reload(); return false;">Submit another response</a>
+    </div>
+
+    <form id="publicForm" method="post" enctype="multipart/form-data" novalidate
+          data-submit-url="{% url 'submit_response' form.form_id %}">
+        {% csrf_token %}
+
+        <div id="formBanner" class="form-banner" style="display:none;"></div>
+
+        {% for element in elements %}
+
+            {% if element.element_type == "question" %}
+                <div class="block" id="block-{{ element.element_id }}">
+
+                    <p class="question-text">
+                        {{ element.question_text }}
+                        {% if element.is_required %}<span class="required-star">*</span>{% endif %}
+                    </p>
+
+                    {% if element.question_type == "short" %}
+                        <input type="text" name="answer_{{ element.element_id }}" placeholder="Your answer">
+
+                    {% elif element.question_type == "paragraph" %}
+                        <textarea name="answer_{{ element.element_id }}" placeholder="Your answer"></textarea>
+
+                    {% elif element.question_type == "mcq" %}
+                        {% for option in element.options.all %}
+                            <div class="option-row">
+                                <input type="radio" id="opt-{{ option.option_id }}"
+                                       name="answer_{{ element.element_id }}" value="{{ option.option_text }}">
+                                <label for="opt-{{ option.option_id }}">{{ option.option_text }}</label>
+                            </div>
+                        {% endfor %}
+
+                    {% elif element.question_type == "checkbox" %}
+                        {% for option in element.options.all %}
+                            <div class="option-row">
+                                <input type="checkbox" id="opt-{{ option.option_id }}"
+                                       name="answer_{{ element.element_id }}" value="{{ option.option_text }}">
+                                <label for="opt-{{ option.option_id }}">{{ option.option_text }}</label>
+                            </div>
+                        {% endfor %}
+
+                    {% elif element.question_type == "dropdown" %}
+                        <select name="answer_{{ element.element_id }}" class="dropdown-select">
+                            <option value="">Choose</option>
+                            {% for option in element.options.all %}
+                                <option value="{{ option.option_text }}">{{ option.option_text }}</option>
+                            {% endfor %}
+                        </select>
+
+                    {% elif element.question_type == "file_upload" %}
+                        <div class="file-upload-box">
+                            <input type="file" name="answer_{{ element.element_id }}"
+                                   {% if element.max_files > 1 %}multiple{% endif %}>
+                            <span class="file-hint">Up to {{ element.max_files }} file(s), 10 MB each</span>
+                        </div>
+
+                    {% elif element.question_type == "linear_scale" %}
+                        <div class="linear-scale-row">
+                            {% if element.scale_min_label %}<span class="scale-edge-label">{{ element.scale_min_label }}</span>{% endif %}
+                            {% for i in element.scale_range %}
+                                <label class="scale-point">
+                                    <input type="radio" name="answer_{{ element.element_id }}" value="{{ i }}">
+                                    <span>{{ i }}</span>
+                                </label>
+                            {% endfor %}
+                            {% if element.scale_max_label %}<span class="scale-edge-label">{{ element.scale_max_label }}</span>{% endif %}
+                        </div>
+
+                    {% elif element.question_type == "mcq_grid" or element.question_type == "checkbox_grid" %}
+                        <div class="grid-wrapper">
+                            <table class="grid-table">
+                                <tr>
+                                    <th></th>
+                                    {% for col in element.options.all %}<th>{{ col.option_text }}</th>{% endfor %}
+                                </tr>
+                                {% for row in element.grid_row_list %}
+                                    <tr>
+                                        <td class="grid-row-label">{{ row }}</td>
+                                        {% for col in element.options.all %}
+                                            <td>
+                                                <input type="{% if element.question_type == 'mcq_grid' %}radio{% else %}checkbox{% endif %}"
+                                                       name="answer_{{ element.element_id }}__{{ forloop.parentloop.counter0 }}"
+                                                       value="{{ col.option_text }}">
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+
+                    {% elif element.question_type == "date" %}
+                        <input type="date" name="answer_{{ element.element_id }}">
+
+                    {% elif element.question_type == "time" %}
+                        <input type="time" name="answer_{{ element.element_id }}">
+                    {% endif %}
+
+                    <p class="field-error" id="err-{{ element.element_id }}"></p>
+                </div>
+
+            {% elif element.element_type == "text" %}
+                <div class="block text-block">
+                    <h3>{{ element.title }}</h3>
+                    <p>{{ element.description }}</p>
+                </div>
+
+            {% elif element.element_type == "sec" %}
+                <div class="block section-block">
+                    <h2>{{ element.title }}</h2>
+                    <p>{{ element.description }}</p>
+                </div>
+
+            {% elif element.element_type == "image" %}
+                <div class="block image-block">
+                    {% if element.image %}<img src="{{ element.image.url }}" alt="Form image">{% endif %}
+                </div>
+            {% endif %}
+
+        {% endfor %}
+
+        <div class="submit-row">
+            {% if form.is_published %}
+                <button type="submit" id="submitBtn" class="submit-btn">Submit</button>
+            {% else %}
+                <button type="button" class="submit-btn" disabled>Submit</button>
+                <span class="submit-note">Preview only. Publish the form to accept responses.</span>
+            {% endif %}
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+(function () {
+
+    const formEl = document.getElementById("publicForm");
+    const submitBtn = document.getElementById("submitBtn");
+    const banner = document.getElementById("formBanner");
+
+    if (!submitBtn) return;   // preview of an unpublished form
+
+    function clearErrors() {
+        banner.style.display = "none";
+        document.querySelectorAll(".field-error").forEach(function (el) { el.textContent = ""; });
+        document.querySelectorAll(".block.has-error").forEach(function (el) { el.classList.remove("has-error"); });
+    }
+
+    function showBanner(text) {
+        banner.textContent = text;
+        banner.style.display = "block";
+        banner.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function showErrors(errors) {
+        let first = null;
+        Object.keys(errors).forEach(function (id) {
+            const msg = document.getElementById("err-" + id);
+            const block = document.getElementById("block-" + id);
+            if (msg) msg.textContent = errors[id];
+            if (block) {
+                block.classList.add("has-error");
+                if (!first) first = block;
+            }
+        });
+        if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    formEl.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+        clearErrors();
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting...";
+
+        try {
+            const response = await fetch(formEl.dataset.submitUrl, {
+                method: "POST",
+                body: new FormData(formEl)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                formEl.style.display = "none";
+                document.getElementById("successPanel").style.display = "block";
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+
+            if (data.errors) showErrors(data.errors);
+            showBanner(data.message || "Unable to submit the form.");
+
+        } catch (error) {
+            console.error("Submit error:", error);
+            showBanner("Something went wrong. Please try again.");
+
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit";
+        }
+    });
+
+})();
+</script>
+
+</body>
+</html>

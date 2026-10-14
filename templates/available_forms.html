@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block title %}Available Forms{% endblock %}
+{% block content %}
+<h1>Available Forms</h1>
+<p class="adm-sub">Forms shared with you or your department.</p>
+
+<div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+    {% for f in forms %}
+    <div class="card" style="margin:0;">
+        <h2 style="margin-bottom:4px;">{{ f.title }}</h2>
+        <p class="muted" style="font-size:12px;margin:0 0 10px;">Shared by {{ f.owner.name }} &middot; {{ f.updated_at|date:"M d, Y" }}</p>
+        {% if f.description %}<p style="font-size:13px;margin:0 0 12px;">{{ f.description|truncatechars:90 }}</p>{% endif %}
+        <a class="btn" style="padding:7px 14px;" href="{% url 'view_form' f.form_id %}">Open form</a>
+    </div>
+    {% empty %}
+    <p class="muted">No forms have been shared with you yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}

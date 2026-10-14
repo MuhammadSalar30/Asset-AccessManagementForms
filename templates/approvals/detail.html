@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+{% block title %}Review request{% endblock %}
+{% block content %}
+<p><a href="{% url 'hod_approvals' %}">&larr; Back to approvals</a></p>
+<h1>{{ resp.form.title }}</h1>
+<p class="adm-sub">
+    Requested by {{ resp.respondent.name|default:"(deleted user)" }}
+    &middot; {{ resp.department.name }}
+    &middot; {{ resp.submitted_at|date:"M d, Y H:i" }}
+    &middot; <span class="badge">{{ resp.get_status_display }}</span>
+</p>
+
+<div class="card">
+    <h2>Request details</h2>
+    {% for row in rows %}
+    <div style="margin-bottom:14px;">
+        <div class="muted" style="font-size:13px;">{{ row.element.question_text }}</div>
+        {% if row.answer %}
+            {% with qt=row.element.question_type %}
+                {% if qt == "checkbox" %}
+                    {{ row.answer.value|join:", " }}
+                {% elif qt == "mcq_grid" or qt == "checkbox_grid" %}
+                    {% for label, picked in row.answer.grid_pairs %}
+                        <div>{{ label }}: {% if qt == "checkbox_grid" %}{{ picked|join:", " }}{% else %}{{ picked }}{% endif %}</div>
+                    {% endfor %}
+                {% elif qt == "file_upload" %}
+                    {% for f in row.answer.files.all %}
+                        <div><a href="{{ f.file.url }}" target="_blank">{{ f.filename }}</a></div>
+                    {% endfor %}
+                {% else %}
+                    {{ row.answer.answer_text|linebreaksbr }}
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            <span class="muted">No answer</span>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% if resp.status == "pending_hod" %}
+<div class="card">
+    <h2>Your decision</h2>
+    <form method="post" action="{% url 'hod_decide' resp.response_id %}">
+        {% csrf_token %}
+                {% if folders %}
+        <p style="margin:0 0 8px;"><strong>Folder access</strong> &mdash; choose the level for each requested folder (needed to approve):</p>
+        {% for path in folders %}
+        <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; padding:6px 0; border-bottom:1px solid #eee;">
+            <span style="flex:1; min-width:220px;">{{ path }}</span>
+            <label><input type="radio" name="level_{{ forloop.counter0 }}" value="full"> Full Access</label>
+            <label><input type="radio" name="level_{{ forloop.counter0 }}" value="read"> Read Only</label>
+        </div>
+        {% endfor %}
+        <div style="height:12px;"></div>
+        {% endif %}
+        <textarea name="comment" rows="3" style="width:100%; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;"
+                  placeholder="Comment (required if you reject)"></textarea>
+        <p style="margin:12px 0 0;">
+            <button type="submit" name="decision" value="approved">Approve</button>
+            <button type="submit" name="decision" value="rejected" class="danger">Reject</button>
+        </p>
+    </form>
+</div>
+{% endif %}
+{% if grants %}
+<div class="card">
+    <h2>Folder access set by HOD</h2>
+    {% for g in grants %}
+    <div style="margin-bottom:6px;">{{ g.folder_path }} &mdash; <strong>{{ g.get_level_display }}</strong></div>
+    {% endfor %}
+</div>
+{% endif %}
+{% if logs %}
+<div class="card">
+    <h2>History</h2>
+    {% for l in logs %}
+    <div style="margin-bottom:6px;">
+        {{ l.get_stage_display }} {{ l.get_decision_display|lower }} by {{ l.approver.name|default:"—" }}
+        on {{ l.decided_at|date:"M d, Y H:i" }}{% if l.comment %} &mdash; {{ l.comment }}{% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

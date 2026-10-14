@@ -1,0 +1,93 @@
+{% extends "manage/base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<p class="adm-sub">Add people, move them between departments, and manage admin access.</p>
+
+<div class="card">
+    <h2>Add user</h2>
+    <form class="inline" method="post" action="{% url 'create_user' %}">
+        {% csrf_token %}
+        <input name="name" placeholder="Full name" required>
+        <input name="email" type="email" placeholder="Email" required>
+        <input name="password" type="password" placeholder="Temporary password" required minlength="6">
+        <select name="department">
+            <option value="">No department</option>
+            {% for d in departments %}<option value="{{ d.pk }}">{{ d.name }}</option>{% endfor %}
+        </select>
+        <button type="submit">Create user</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>All users ({{ users|length }})</h2>
+
+    <form class="filters" method="get">
+        <input name="q" value="{{ q }}" placeholder="Search name or email">
+        <select name="department">
+            <option value="">All departments</option>
+            {% for d in departments %}
+            <option value="{{ d.pk }}" {% if f_dept == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a class="btn ghost" style="background:#fff;color:#673ab7;border:1px solid #673ab7;padding:7px 10px;" href="{% url 'manage_users' %}">Clear</a>
+    </form>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Actions</th></tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.name }}{% if u.user_id == me.user_id %} <span class="muted">(you)</span>{% endif %}</td>
+            <td>{{ u.email }}</td>
+            <td>
+                <form class="inline" method="post" action="{% url 'set_user_department' u.user_id %}">
+                    {% csrf_token %}
+                    <select name="department" onchange="this.form.submit()">
+                        <option value="">— none —</option>
+                        {% for d in departments %}
+                        <option value="{{ d.pk }}" {% if u.department_id == d.pk %}selected{% endif %}>{{ d.name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </td>
+            <td>{% if u.is_admin %}<span class="badge admin">Admin</span>{% else %}<span class="badge">User</span>{% endif %}</td>
+            <td>
+                {% if u.user_id != me.user_id %}
+                <form class="inline" method="post" action="{% url 'toggle_admin' u.user_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="make_admin" value="{% if u.is_admin %}0{% else %}1{% endif %}">
+                    <button type="submit" class="ghost">{% if u.is_admin %}Remove admin{% else %}Make admin{% endif %}</button>
+                </form>
+                {% endif %}
+                <form class="inline" method="post" action="{% url 'reset_user_password' u.user_id %}"
+                      onsubmit="return confirm('Reset password for {{ u.name|escapejs }}?');">
+                    {% csrf_token %}
+                    <input type="password" name="password" placeholder="New password" required minlength="6" style="width:130px;">
+                    <button type="submit" class="ghost">Reset</button>
+                </form>
+                                {% if u.user_id != me.user_id %}
+                <form class="inline" method="post" action="{% url 'delete_user' u.user_id %}"
+                      onsubmit="return confirm('Delete {{ u.name|escapejs }}? The account is removed permanently. Forms they created are transferred to you, and requests they submitted stay on record without a name.');">
+                    {% csrf_token %}
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>
+                <form class="inline" method="post" action="{% url 'set_employee_code' u.user_id %}">
+                    {% csrf_token %}
+                    <input name="employee_code" value="{{ u.employee_code|default:'' }}" placeholder="—" style="width:90px;">
+                    <button type="submit" class="ghost">Save</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

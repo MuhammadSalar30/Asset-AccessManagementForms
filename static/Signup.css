@@ -1,0 +1,143 @@
+/* Container layout to perfectly center the auth form on the screen */
+.signup-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #f8fafc; /* Soft off-white backdrop background */
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* The card column wrapping structure */
+.auth-form-col {
+  width: 100%;
+  max-width: 420px; /* Standard clean dimensions for login boxes */
+}
+
+/* Main card wrapping box styling */
+.auth-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* The tiny introductory sub-label */
+.auth-card .eyebrow {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #2563eb; /* Primary theme Royal Blue brand color */
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+/* Heading title typography styling */
+.auth-card h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+/* Subtitle contextual block details text */
+.auth-card .sub {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+/* Container grouping rows spacing */
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Label field titles styling */
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+/* Input textbox styling rules */
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  box-sizing: border-box;
+  transition: all 0.15s ease-in-out;
+}
+
+/* Active focus highlighter behavior for textboxes */
+.form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Style standard native checkboxes slightly */
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2563eb; /* Colors the checked box brand blue */
+}
+
+/* Anchor links general interactive transitions color values */
+.auth-card a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.auth-card a:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+/* Primary submission control button styling rules */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Bottom footer sign-up contextual link box block */
+.auth-links {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}

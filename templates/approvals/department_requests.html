@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Department requests{% endblock %}
+{% block content %}
+<h1>Department requests</h1>
+<p class="adm-sub">All requests from employees in your department ({{ total }}).</p>
+
+<div class="card">
+    <form class="filters" method="get">
+        <input name="q" value="{{ q }}" placeholder="Search employee or form">
+        <select name="status">
+            <option value="">All statuses</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+        <a class="btn" style="background:#fff;color:#673ab7;border:1px solid #673ab7;padding:7px 10px;" href="{% url 'hod_department_requests' %}">Clear</a>
+    </form>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>Request</th><th>Employee</th><th>Submitted</th><th>Status</th><th></th></tr>
+        {% for r in requests_qs %}
+        <tr>
+            <td>{{ r.form.title }}</td>
+            <td>{{ r.respondent.name|default:"(deleted user)" }}</td>
+            <td>{{ r.submitted_at|date:"M d, Y H:i" }}</td>
+            <td><span class="badge">{{ r.get_status_display }}</span></td>
+            <td><a href="{% url 'hod_request_detail' r.response_id %}">Open</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted">No requests match.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

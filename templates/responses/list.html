@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block title %}Responses{% endblock %}
+{% block content %}
+<h1>Responses</h1>
+<p class="adm-sub">
+    {% if is_admin_view %}All responses across the organization.{% else %}Responses from employees in your department.{% endif %}
+    ({{ total }})
+</p>
+
+<div class="card">
+    <form class="filters" method="get">
+        <input name="q" value="{{ q }}" placeholder="Employee, code, email or form">
+        <select name="form">
+            <option value="">All forms</option>
+            {% for f in forms %}
+            <option value="{{ f.form_id }}" {% if f_form == f.form_id|stringformat:"s" %}selected{% endif %}>{{ f.title }}</option>
+            {% endfor %}
+        </select>
+        {% if is_admin_view %}
+        <select name="department">
+            <option value="">All departments</option>
+            {% for d in departments %}
+            <option value="{{ d.pk }}" {% if f_dept == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        <select name="status">
+            <option value="">All statuses</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="from" value="{{ date_from }}" title="From">
+        <input type="date" name="to" value="{{ date_to }}" title="To">
+        <button type="submit">Filter</button>
+        <a class="btn" style="background:#fff;color:#673ab7;border:1px solid #673ab7;padding:7px 10px;" href="{% url 'responses_list' %}">Clear</a>
+    </form>
+
+    {% if total > 200 %}<p class="muted" style="font-size:13px;">Showing the newest 200 of {{ total }}. Narrow the filters to see others.</p>{% endif %}
+
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>Submitted</th><th>Employee</th><th>Code</th>{% if is_admin_view %}<th>Department</th>{% endif %}
+            <th>Form</th><th>Status</th><th></th>
+        </tr>
+        {% for r in responses %}
+        <tr>
+            <td>{{ r.submitted_at|date:"M d, Y H:i" }}</td>
+            <td>{{ r.respondent.name|default:"(deleted user)" }}</td>
+            <td>{{ r.respondent.employee_code|default:"—" }}</td>
+            {% if is_admin_view %}<td>{{ r.department.name|default:"—" }}</td>{% endif %}
+            <td>{{ r.form.title }}</td>
+            <td><span class="badge">{{ r.get_status_display }}</span></td>
+            <td><a href="{% url 'response_detail' r.response_id %}">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="muted">No responses match.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

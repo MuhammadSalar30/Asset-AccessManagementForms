@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block title %}My Assets &amp; Access{% endblock %}
+{% block extra_head %}
+<style>
+    .cv { max-width:820px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:8px; padding:32px 36px; }
+    .cv-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; border-bottom:2px solid var(--purple); padding-bottom:14px; margin-bottom:20px; }
+    .cv-head h1 { margin:0 0 4px; font-size:26px; }
+    .cv-section { font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--purple); border-bottom:1px solid var(--border); padding-bottom:4px; margin:26px 0 12px; }
+    .cv-row { display:grid; grid-template-columns:200px 1fr; gap:12px; padding:6px 0; font-size:14px; }
+    .cv-label { color:var(--muted); }
+    .cv-actions { max-width:820px; margin:0 auto 14px; display:flex; gap:8px; justify-content:flex-end; }
+    @media print { .adm-sidebar, .navbar-layout, .cv-actions { display:none !important; } .adm-main { padding:0; } .cv { border:none; } }
+</style>
+{% endblock %}
+{% block content %}
+<!--<div class="cv-actions">
+    <button type="button" class="ghost" onclick="window.print()">Print</button>
+    <a class="btn" style="padding:7px 14px;" href="{% url 'view_form' form.form_id %}">Request a change</a>
+</div>  -->
+<div class="cv-actions">
+    {% if readonly %}<span class="muted" style="margin-right:auto; font-size:13px;">Read-only view</span>{% endif %}
+    <button type="button" class="ghost" onclick="window.print()">Print</button>
+    {% if readonly %}
+        <a class="btn" style="padding:7px 14px;" href="{% url 'hod_team' %}">&larr; Back to team</a>
+    {% else %}
+        <a class="btn" style="padding:7px 14px;" href="{% url 'view_form' form.form_id %}">Request a change</a>
+    {% endif %}
+</div>
+
+<div class="cv">
+    <div class="cv-head">
+        <div>
+            <h1>{{ emp.name }}</h1>
+            <div class="muted">{{ emp.department.name|default:"—" }} &middot; Employee code {{ emp.employee_code }}</div>
+            <div class="muted">{{ emp.email }}</div>
+        </div>
+        <div style="text-align:right;">
+            <span class="badge">{{ resp.get_status_display }}</span>
+            <div class="muted" style="font-size:12px; margin-top:6px;">Last submitted {{ resp.submitted_at|date:"M d, Y" }}</div>
+        </div>
+    </div>
+
+    {% for it in items %}
+        {% if it.kind == "section" %}
+            <div class="cv-section">{{ it.title }}</div>
+        {% else %}
+            <div class="cv-row">
+                <div class="cv-label">{{ it.element.question_text }}</div>
+                <div>
+                {% with qt=it.element.question_type a=it.answer %}
+                    {% if qt == "checkbox" %}
+                        {{ a.value|join:", " }}
+                    {% elif qt == "mcq_grid" or qt == "checkbox_grid" %}
+                        {% for label, picked in a.grid_pairs %}
+                            <div>{{ label }}: {% if qt == "checkbox_grid" %}{{ picked|join:", " }}{% else %}{{ picked }}{% endif %}</div>
+                        {% endfor %}
+                    {% elif qt == "file_upload" %}
+                        {% for f in a.files.all %}<div><a href="{{ f.file.url }}" target="_blank">{{ f.filename }}</a></div>{% endfor %}
+                    {% else %}
+                        {{ a.answer_text|linebreaksbr }}
+                    {% endif %}
+                {% endwith %}
+                </div>
+            </div>
+        {% endif %}
+    {% empty %}
+        <p class="muted">No details were recorded.</p>
+    {% endfor %}
+
+    {% if logs %}
+    <div class="cv-section">Approvals</div>
+    {% for l in logs %}
+        <div class="cv-row">
+            <div class="cv-label">{{ l.get_stage_display }}</div>
+            <div>{{ l.get_decision_display }} by {{ l.approver.name|default:"—" }} on {{ l.decided_at|date:"M d, Y" }}{% if l.comment %} &mdash; {{ l.comment }}{% endif %}</div>
+        </div>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+/* ==================== NAVBAR ==================== */
+
+.navbar-layout {
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+.navbar-top-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.navbar-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.FormTitleBody {
+    font-size: 24px;
+    font-weight: 500;
+    color: #202124;
+    width: 100%;
+    max-width: 320px;
+    padding: 6px 4px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    outline: none;
+    background: transparent;
+    transition: border-color 0.15s ease;
+}
+
+.FormTitleBody:hover { border-bottom-color: #dadce0; }
+.FormTitleBody:focus { border-bottom-color: #673ab7; }
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.btn-save,
+.btn-publish {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-save {
+    background: #fff;
+    color: #673ab7;
+    border: 1px solid #673ab7;
+}
+.btn-save:hover { background: #f3e8fd; }
+
+.btn-publish {
+    background: #673ab7;
+    color: #fff;
+    border: 1px solid #673ab7;
+}
+.btn-publish:hover { background: #5a2fa0; }
+
+.role-pill {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    color: #1967d2;
+    background: #e8f0fe;
+    padding: 4px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f3f4;
+    padding: 4px 12px 4px 4px;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-left:auto;
+}
+
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #673ab7;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #202124;
+}
+
+/* ---------- Nav links row ---------- */
+
+.FormNavBar {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid #f1f3f4;
+}
+
+.FormNavBar a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #5f6368;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.FormNavBar a:hover {
+    color: #202124;
+    background: #f8f9fa;
+}
+
+.FormNavBar a.active {
+    color: #673ab7;
+    border-bottom-color: #673ab7;
+}
+
+/* ==================== PUBLISH / MANAGE POPUPS ==================== */
+
+.publish-modal,
+.manage-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.manage-modal { z-index: 1100; }
+
+.popup-content-box {
+    width: 420px;
+    max-width: 90vw;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.horizontal-line {
+    border: none;
+    height: 2px;
+    background-color: #2563eb;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.manage-sec {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.manage-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13.6px;
+    font-weight: 600;
+    cursor: pointer;
+    color: blue;
+    background: white;
+    border: 2px solid blue;
+    font-family: inherit;
+}
+.lp-btn-logout {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #d93025;
+    border: 1px solid #d93025;
+    background: transparent;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.lp-btn-logout:hover {
+    background: #fce8e6;
+}

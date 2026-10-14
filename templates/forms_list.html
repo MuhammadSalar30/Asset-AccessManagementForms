@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block title %}My Forms{% endblock %}
+{% block content %}
+    <style>
+        body { margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif; background:#f8f9fa; }
+        .forms-grid-wrapper { max-width:1000px; margin:0 auto; padding:24px 16px; }
+        .forms-grid-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+        .new-form-btn { background:#673ab7; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-size:14px; cursor:pointer; text-decoration:none; }
+        .forms-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+        .form-card { background:#fff; border:1px solid #dadce0; border-radius:8px; padding:18px; }
+        .form-card h3 { margin:0 0 6px; font-size:15px; }
+        .form-card p { margin:0 0 12px; font-size:12px; color:#5f6368; }
+        .form-card-actions { display:flex; gap:10px; font-size:13px; }
+        .form-card-actions a { color:#673ab7; text-decoration:none; }
+        .form-card-actions a:hover { text-decoration:underline; }
+        .status-pill { font-size:11px; padding:2px 8px; border-radius:10px; background:#e8f0fe; color:#1967d2; }
+        .status-pill.draft { background:#f1f3f4; color:#5f6368; }
+        .forms-grid-header {
+    margin-top: 32px;
+}
+.forms-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 32px;
+    margin-bottom: 20px;
+}
+.forms-grid-wrapper {
+    padding-top: 40px;
+}
+    </style>
+</head>
+<body>
+
+
+<div class="forms-grid-wrapper">
+
+    <div class="forms-grid-header">
+        <h1>Your Forms</h1>
+        <a href="{% url 'forms' %}" class="new-form-btn">+ New Form</a>
+    </div>
+
+    <div class="forms-grid">
+        {% for form in forms %}
+            <div class="form-card">
+                <h3>{{ form.title }}</h3>
+                <span class="status-pill {% if not form.is_published %}draft{% endif %}">
+                    {% if form.is_published %}Published{% else %}Draft{% endif %}
+                </span>
+                <p>Updated {{ form.updated_at|date:"M d, Y" }}</p>
+                <div class="form-card-actions">
+                    <a href="{% url 'edit_form' form.form_id %}">Edit</a>
+                    <a href="{% url 'view_responses' form.form_id %}">Responses</a>
+                </div>
+            </div>
+        {% empty %}
+            <p>No forms yet — create your first one.</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+</body>
+</html>
+    </div>   {# closes forms-grid-wrapper #}
+{% endblock %}

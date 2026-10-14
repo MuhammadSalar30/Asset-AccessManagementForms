@@ -1,0 +1,58 @@
+{% extends "layout.html" %}
+{% block title %}System Forms{% endblock %}
+{% block content %}
+<h1>System Forms</h1>
+<p class="adm-sub">Choose which forms employees are sent to automatically.</p>
+
+{% if folder_count == 0 %}
+<div class="warn">No shared folders have been added yet, so the folder request form has nothing to choose from.
+    <a href="{% url 'manage_folders' %}">Add folders</a></div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="card">
+        <h2>Assets &amp; Access Management form</h2>
+        <p class="muted" style="font-size:13px; margin-top:0;">New employees see it directly. Returning employees confirm their employee code first.</p>
+        <select name="asset_access" style="min-width:340px;">
+            <option value="">— not set —</option>
+            <option value="builtin:asset_access" {% if asset_form and asset_form.builtin_key == "asset_access" %}selected{% endif %}>Assets &amp; Access Management (ready-made, from the paper form)</option>
+            {% for f in all_forms %}{% if not f.builtin_key %}
+            <option value="{{ f.form_id }}" {% if asset_form and asset_form.pk == f.pk %}selected{% endif %}>{{ f.title }}{% if not f.is_published %} (draft){% endif %}</option>
+            {% endif %}{% endfor %}
+        </select>
+        {% if asset_form %}
+        <p style="margin:16px 0 6px;">Which question holds the employee code?</p>
+        <select name="code_element" style="min-width:340px;">
+            <option value="">— automatic —</option>
+            {% for el in code_choices %}
+            <option value="{{ el.element_id }}" {% if asset_form.code_element_id == el.element_id %}selected{% endif %}>{{ el.question_text }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Folder / File request form</h2>
+        <select name="folder_request" style="min-width:340px;">
+            <option value="">— not set —</option>
+            <option value="builtin:folder_request" {% if folder_form and folder_form.builtin_key == "folder_request" %}selected{% endif %}>Folder / File Request (ready-made)</option>
+            {% for f in all_forms %}{% if not f.builtin_key %}
+            <option value="{{ f.form_id }}" {% if folder_form and folder_form.pk == f.pk %}selected{% endif %}>{{ f.title }}{% if not f.is_published %} (draft){% endif %}</option>
+            {% endif %}{% endfor %}
+        </select>
+        {% if folder_form %}
+        <p style="margin:16px 0 6px;">Which question lists the shared folders?</p>
+        <select name="folders_element" style="min-width:340px;">
+            <option value="">— automatic —</option>
+            {% for el in folder_choices %}
+            <option value="{{ el.element_id }}" {% if folder_form.folders_element_id == el.element_id %}selected{% endif %}>{{ el.question_text }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

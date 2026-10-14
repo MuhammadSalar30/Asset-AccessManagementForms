@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+.Settings {
+  --bg: #ffffff;
+  --panel: #f1f3f4;
+  --panel-border: #dadce0;
+  --accent: #0000ff;
+  --accent-soft: #e8e8ff;
+  --ink: #202124;
+  --muted: #5f6368;
+  --danger: #d93025;
+
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  min-height: 100vh;
+  padding-bottom: 80px; /* room for the save bar */
+}
+
+/* ---------- header ---------- */
+.Settings-header {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 24px;
+}
+.Settings-header h1 {
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.Settings-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- layout ---------- */
+.Settings-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 40px;
+  padding: 0 24px;
+  align-items: flex-start;
+}
+
+.Settings-nav {
+  width: 190px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 24px;
+}
+.Settings-navItem {
+  text-align: left;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 0 6px 6px 0;
+}
+.Settings-navItem:hover {
+  background: var(--panel);
+  color: var(--ink);
+}
+.Settings-navItem.is-active {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.Settings-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ---------- panels ---------- */
+.Panel {
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.Panel-header {
+  padding: 16px 20px 4px;
+}
+.Panel-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+.Panel-header p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+.Panel-body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- rows (toggles / radios) ---------- */
+.Row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+.Panel-body .Row:first-child {
+  border-top: none;
+}
+.Row--radio {
+  justify-content: flex-start;
+}
+.Row--radio input {
+  margin-right: 12px;
+  accent-color: var(--accent);
+}
+.Row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.Row-label {
+  font-size: 14px;
+}
+.Row-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- switch ---------- */
+.Switch {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #c4c7c5;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.Switch.is-on {
+  background: var(--accent);
+}
+.Switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.15s ease;
+}
+.Switch.is-on .Switch-knob {
+  transform: translateX(16px);
+}
+
+/* ---------- inputs ---------- */
+.TextArea,
+.TextInput {
+  font-family: inherit;
+  font-size: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--ink);
+  outline: none;
+}
+.TextArea {
+  width: 100%;
+  margin: 0 20px 16px;
+  width: calc(100% - 40px);
+  resize: vertical;
+}
+.TextArea:focus,
+.TextInput:focus {
+  border-color: var(--accent);
+}
+
+.InviteRow {
+  display: flex;
+  gap: 8px;
+  padding: 14px 20px;
+}
+.InviteRow .TextInput {
+  flex: 1;
+}
+
+.CollabList {
+  list-style: none;
+  margin: 0;
+  padding: 0 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.CollabList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  background: var(--panel);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.CollabList-remove {
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+.CollabList-remove:hover {
+  color: var(--danger);
+}
+
+/* ---------- theme swatches ---------- */
+.Swatches {
+  display: flex;
+  gap: 10px;
+  padding: 4px 20px 20px;
+}
+.Swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+.Swatch.is-selected {
+  border-color: var(--ink);
+}
+
+/* ---------- buttons ---------- */
+.Btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.Btn--primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+.Btn--secondary {
+  background: var(--panel);
+  border-color: var(--panel-border);
+  color: var(--ink);
+}
+.Btn--ghost {
+  background: none;
+  color: var(--muted);
+}
+.Btn--ghost:hover {
+  color: var(--ink);
+}
+
+/* ---------- save bar ---------- */
+.SaveBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--ink);
+  color: #ffffff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.SaveBar-actions {
+  display: flex;
+  gap: 10px;
+}
+.SaveBar .Btn--ghost {
+  color: #c4c7c5;
+}
+.SaveBar .Btn--ghost:hover {
+  color: #ffffff;
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 640px) {
+  .Settings-layout {
+    flex-direction: column;
+  }
+  .Settings-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    width: 100%;
+    gap: 4px;
+  }
+  .Settings-navItem {
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 6px 6px 0 0;
+    white-space: nowrap;
+  }
+  .Settings-navItem.is-active {
+    border-bottom-color: var(--accent);
+  }
+}

@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block title %}Shared Folders{% endblock %}
+{% block content %}
+<h1>Shared Folders</h1>
+<p class="adm-sub">Folders employees can choose from in the Folder / File request form.</p>
+
+{% if not form_ready %}
+<div class="warn">No folder request form is connected yet. Open
+    <a href="{% url 'manage_system_forms' %}">System Forms</a> and select the Folder / File request form.</div>
+{% endif %}
+
+<div class="card">
+    <h2>Add folders</h2>
+    <form method="post" action="{% url 'add_folders' %}">
+        {% csrf_token %}
+        <textarea name="paths" rows="4" required placeholder="One folder path per line, e.g.&#10;IT\Employee\Afzal Hussain&#10;Finance\Reports"
+                  style="width:100%; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;"></textarea>
+        <p style="margin:10px 0 0;"><button type="submit">Add</button></p>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Folders ({{ folders|length }})</h2>
+    <div class="table-wrap">
+    <table>
+        <tr><th>Path</th><th>Status</th><th></th></tr>
+        {% for f in folders %}
+        <tr>
+            <td>{{ f.path }}</td>
+            <td>{% if f.is_active %}<span class="badge pub">Available</span>{% else %}<span class="badge">Hidden</span>{% endif %}</td>
+            <td>
+                <form class="inline" method="post" action="{% url 'toggle_folder' f.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="ghost">{% if f.is_active %}Hide{% else %}Show{% endif %}</button>
+                </form>
+                <form class="inline" method="post" action="{% url 'delete_folder' f.pk %}"
+                      onsubmit="return confirm('Remove this folder from the list?');">
+                    {% csrf_token %}
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="muted">No folders yet.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

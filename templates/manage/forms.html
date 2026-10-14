@@ -1,0 +1,36 @@
+{% extends "manage/base.html" %}
+{% block title %}All Forms{% endblock %}
+{% block content %}
+<h1>All Forms</h1>
+<p class="adm-sub">Every form across the organization. Admins can edit any form.</p>
+
+<div class="card">
+    <form class="filters" method="get">
+        <input name="q" value="{{ q }}" placeholder="Search title or owner">
+        <button type="submit">Search</button>
+    </form>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>Title</th><th>Owner</th><th>Department</th><th>Status</th><th>Access</th><th>Responses</th><th>Created</th><th></th></tr>
+        {% for f in forms %}
+        <tr>
+            <td>{{ f.title }}</td>
+            <td>{{ f.owner.name }}</td>
+            <td>{{ f.owner.department.name|default:"—" }}</td>
+            <td>{% if f.is_published %}<span class="badge pub">Published</span>{% else %}<span class="badge">Draft</span>{% endif %}</td>
+            <td>{{ f.get_access_type_display }}</td>
+            <td>{{ f.response_count }}</td>
+            <td>{{ f.created_at|date:"M d, Y" }}</td>
+            <td>
+                <a href="{% url 'edit_form' f.form_id %}">Edit</a>
+                {% if f.is_published %}&nbsp;&middot;&nbsp;<a href="{% url 'view_form' f.form_id %}" target="_blank">Open</a>{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="muted">No forms found.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

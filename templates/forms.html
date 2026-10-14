@@ -1,0 +1,928 @@
+{% extends "layout.html" %}
+{% load static %}
+{% block title %}Create Form{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'Forms.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app-layout">
+
+    <section class="Form form-body">
+
+        <div class="SectionRow">
+
+            <!-- Django version of Navbar -->
+        
+
+
+            <!-- ---------- Form Title ---------- -->
+             <div class="FTitle">
+
+   <!---<input
+        type="text"
+        id="formTitle"
+        class="Ftitle"
+        value="Untitled Form"
+        placeholder="Form title"
+    > -->
+    <input
+    type="text"
+    id="formHeadingInput"
+    class="Ftitle"
+    value="{{ form.title|default:'Untitled Form' }}"
+    placeholder="Form title"
+>
+
+    <textarea
+        id="formDescription"
+        class="Fdes"
+        placeholder="Form description"
+    >{{ form.description|default:'' }}</textarea>
+
+</div>
+
+          <!---  <div class="FTitle">
+                
+                <form style="display:none;">
+                    {% csrf_token %}
+
+                    <input
+                        type="text"
+                        id="Ftitle"
+                        class="Ftitle"
+                        value="Untitled Forms"
+                    >
+
+                    <br>
+
+                    <input
+                        type="text"
+                        id="Fdes"
+                        class="Fdes"
+                        placeholder="Form description"
+                    >
+
+                </form>
+
+            </div> -->
+
+
+            <!-- Chooser appears here when there are no blocks -->
+
+            <div
+                class="ChooseSec"
+                id="initialChooser"
+            >
+                <ul class="List">
+
+                    <li
+                        class="AddQues"
+                        onclick="addSection('question')"
+                    >
+                        ➕
+                    </li>
+
+                    <li
+                        class="Addtitle"
+                        onclick="addSection('text')"
+                    >
+                        📄
+                    </li>
+
+                    <li
+                        class="AddImage"
+                        onclick="addSection('image')"
+                    >
+                        🖼️
+                    </li>
+
+                    <li
+                        class="AddSec"
+                        onclick="addSection('sec')"
+                    >
+                        🗂️
+                    </li>
+
+                </ul>
+            </div>
+
+        </div>
+
+
+        <!-- Dynamic sections are inserted here -->
+
+        <div id="sectionsContainer"></div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   FORM BUILDER
+   ========================================================= */
+
+
+
+
+/* sections = JSON.parse('{{ elements_json|escapejs }}');  */
+let sections = [];
+
+{% if elements_json %}
+(function () {
+    const loaded = JSON.parse('{{ elements_json|escapejs }}');
+    sections = loaded.map(function (el, idx) {
+        el.dbId = el.id;                              // asal database id, save ke liye
+        el.id = Date.now() + idx + Math.random();      // naya local id, sirf DOM ke liye
+        return el;
+    });
+})();
+{% endif %}
+
+
+/* =========================================================
+   SYNC DOM VALUES INTO SECTIONS ARRAY
+   ========================================================= */
+
+
+function syncSectionsFromDOM() {
+
+    sections.forEach(function(section) {
+
+        if (section.type === "question") {
+
+            const qInput = document.getElementById("FQues-" + section.id);
+            if (qInput) section.question = qInput.value;
+
+            const typeSelect = document.getElementById("QType-" + section.id);
+            if (typeSelect) section.questionType = typeSelect.value;
+
+            const qType = section.questionType;
+
+            if (qType === "mcq" || qType === "checkbox" || qType === "dropdown") {
+                const optionsContainer = document.getElementById("options-" + section.id);
+                if (optionsContainer) {
+                    section.options = Array.from(optionsContainer.querySelectorAll(".OptionLabel"))
+                        .map(function(inp) { return inp.value; });
+                }
+            }
+
+            if (qType === "file_upload") {
+                const maxFilesInput = document.getElementById("MaxFiles-" + section.id);
+                if (maxFilesInput) section.maxFiles = parseInt(maxFilesInput.value) || 1;
+            }
+
+            if (qType === "linear_scale") {
+                const minSel = document.getElementById("ScaleMin-" + section.id);
+                const maxSel = document.getElementById("ScaleMax-" + section.id);
+                const minLabelInput = document.getElementById("ScaleMinLabel-" + section.id);
+                const maxLabelInput = document.getElementById("ScaleMaxLabel-" + section.id);
+                if (minSel) section.scaleMin = parseInt(minSel.value);
+                if (maxSel) section.scaleMax = parseInt(maxSel.value);
+                if (minLabelInput) section.scaleMinLabel = minLabelInput.value;
+                if (maxLabelInput) section.scaleMaxLabel = maxLabelInput.value;
+            }
+
+        
+            if (qType === "mcq_grid" || qType === "checkbox_grid") {
+
+    const rowsContainer = document.getElementById("gridrows-" + section.id);
+    if (rowsContainer) {
+        section.gridRows = Array.from(rowsContainer.querySelectorAll(".GridItemInput"))
+            .map(function(inp) { return inp.value; })
+            .filter(Boolean);
+    }
+
+    const colsContainer = document.getElementById("gridcols-" + section.id);
+    if (colsContainer) {
+        section.options = Array.from(colsContainer.querySelectorAll(".GridItemInput"))
+            .map(function(inp) { return inp.value; })
+            .filter(Boolean);
+    }
+
+}
+
+            const reqCheckbox = document.getElementById("Required-" + section.id);
+            if (reqCheckbox) section.required = reqCheckbox.checked;
+
+        } else if (section.type === "text") {
+
+            const titleInput = document.getElementById("Destitle-" + section.id);
+            if (titleInput) section.title = titleInput.value;
+            const descInput = document.getElementById("Desdesc-" + section.id);
+            if (descInput) section.description = descInput.value;
+            const reqCheckbox = document.getElementById("Required-" + section.id);
+            if (reqCheckbox) section.required = reqCheckbox.checked;
+
+        } else if (section.type === "sec") {
+
+            const titleInput = document.getElementById("Sectitle-" + section.id);
+            if (titleInput) section.title = titleInput.value;
+            const descInput = document.getElementById("Secdesc-" + section.id);
+            if (descInput) section.description = descInput.value;
+            const reqCheckbox = document.getElementById("Required-" + section.id);
+            if (reqCheckbox) section.required = reqCheckbox.checked;
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   ADD SECTION
+   ========================================================= */
+
+function addSection(type) {
+
+    syncSectionsFromDOM();
+
+    const section = {
+        type: type,
+        id: Date.now() + Math.random(),
+        question: type === "question" ? "Question" : undefined,
+        questionType: type === "question" ? "short" : undefined,
+        options: undefined,
+        required: false,
+        title: type === "text" ? "Untitled Title" : type === "sec" ? "Untitled Section" : undefined,
+        description: (type === "text" || type === "sec") ? "" : undefined
+    };
+
+    sections.push(section);
+    renderSections();
+
+}
+
+/* =========================================================
+   DELETE SECTION
+   ========================================================= */
+
+function deleteSection(id) {
+
+    syncSectionsFromDOM();   // preserve everything else before rebuild
+
+    sections = sections.filter(function(section) {
+        return section.id !== id;
+    });
+
+    renderSections();
+}
+
+function handleImage(input, id) {
+
+    const file = input.files[0];
+    if (!file) return;
+
+    const section = sections.find(function(s) { return s.id == id; });
+
+    if (section) {
+        section.imageFile = file;
+        section.imagePreviewURL = URL.createObjectURL(file);
+    }
+
+    renderSections();   // re-render through the normal path so state stays consistent
+
+}
+
+
+
+/* =========================================================
+   RENDER ALL SECTIONS
+   ========================================================= */
+
+function renderSections() {
+
+    const container = document.getElementById("sectionsContainer");
+
+    container.innerHTML = "";
+
+    const initialChooser = document.getElementById("initialChooser");
+
+
+    /*
+       Same behavior as:
+
+       {sections.length === 0 && <ChooseSec />}
+    */
+
+    if (sections.length === 0) {
+
+        initialChooser.style.display = "";
+
+    } else {
+
+        initialChooser.style.display = "none";
+    }
+
+
+    sections.forEach(function(section, index) {
+
+        const row = document.createElement("div");
+
+        row.className = "SectionRow";
+
+
+        /* Render the actual block */
+
+        row.innerHTML = renderSection(section, index);
+
+
+        /*
+
+           Same behavior as:
+
+           {isLast && <ChooseSec onAdd={addSection} />}
+
+        */
+
+        if (index === sections.length - 1) {
+
+            row.innerHTML += createChooser();
+
+        }
+
+
+        container.appendChild(row);
+
+    });
+}
+
+
+/* =========================================================
+   RENDER SECTION
+   ========================================================= */
+
+function renderSection(section, index) {
+
+    switch (section.type) {
+
+        case "question":
+
+            return createQuestion(section);
+
+
+        case "text":
+
+            return createDescription(section);
+
+
+        case "image":
+
+            return createImage(section);
+
+
+        case "sec":
+
+            return createSectionBlock(section, index);
+
+
+        default:
+
+            return "";
+
+    }
+
+}
+
+
+/* =========================================================
+   CHOOSE SECTION
+   ========================================================= */
+
+function createChooser() {
+
+    return `
+
+        <div class="ChooseSec">
+
+            <ul class="List">
+
+                <li
+                    class="AddQues"
+                    onclick="addSection('question')"
+                >
+                    ➕
+                </li>
+
+                <li
+                    class="Addtitle"
+                    onclick="addSection('text')"
+                >
+                    📄
+                </li>
+
+                <li
+                    class="AddImage"
+                    onclick="addSection('image')"
+                >
+                    🖼️
+                </li>
+
+                <li
+                    class="AddSec"
+                    onclick="addSection('sec')"
+                >
+                    🗂️
+                </li>
+
+            </ul>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   QUESTION BLOCK
+   ========================================================= */
+
+function createQuestion(section) {
+
+    const id = section.id;
+    const questionValue = section.question || "Question";
+    const qType = section.questionType || "short";
+
+    const typeOptions = [
+        ["short", "Short answer"],
+        ["paragraph", "Paragraph"],
+        ["mcq", "Multiple choice"],
+        ["checkbox", "Checkboxes"],
+        ["dropdown", "Dropdown"],
+        ["file_upload", "File upload"],
+        ["linear_scale", "Linear scale"],
+        ["mcq_grid", "Multiple-choice grid"],
+        ["checkbox_grid", "Checkbox grid"],
+        ["date", "Date"],
+        ["time", "Time"],
+    ];
+
+    const typeOptionsHtml = typeOptions.map(function(opt) {
+        return `<option value="${opt[0]}" ${qType === opt[0] ? "selected" : ""}>${opt[1]}</option>`;
+    }).join("");
+
+    return `
+        <div class="Ques">
+
+            <div class="QuesHeaderRow">
+                <input type="text" id="FQues-${id}" class="FQues" value="${questionValue}" placeholder="Question">
+                <select id="QType-${id}" class="QTypeSelect" onchange="changeQuestionType(${id}, this.value)">
+                    ${typeOptionsHtml}
+                </select>
+            </div>
+
+            <div class="QuestionBody" id="qbody-${id}">
+                ${renderQuestionBody(section)}
+            </div>
+
+            <div class="add-ques-row">
+                ${createRequired(id, section.required)}
+                <button type="button" class="delete-block-btn" onclick="deleteSection(${id})" title="Delete question">🗑️</button>
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   QUESTION BODY (varies by type)
+   ========================================================= */
+
+function renderQuestionBody(section) {
+
+    const id = section.id;
+    const qType = section.questionType || "short";
+
+    switch (qType) {
+
+        case "short":
+            return `<input type="text" class="ShortAnswerPreview" placeholder="Short answer text" disabled>`;
+
+        case "paragraph":
+            return `<textarea class="ParagraphPreview" placeholder="Long answer text" disabled></textarea>`;
+
+        case "mcq":
+        case "checkbox":
+        case "dropdown": {
+            const options = (section.options && section.options.length) ? section.options : ["Option 1"];
+            let optionsHtml = "";
+            options.forEach(function(opt, idx) {
+                optionsHtml += createOption(id, idx, opt, qType);
+            });
+            return `
+                <div class="OptionsContainer" id="options-${id}">
+                    ${optionsHtml}
+                </div>
+                <button type="button" class="AddOptionBtn" onclick="addOption(${id})">+ Add Option</button>
+            `;
+        }
+
+        case "file_upload":
+            return `
+                <div class="FileUploadConfig">
+                    📎 Respondents will be able to upload a file here.
+                    <label class="MaxFilesLabel">
+                        Max files:
+                        <input type="number" id="MaxFiles-${id}" min="1" max="10" value="${section.maxFiles || 1}">
+                    </label>
+                </div>
+            `;
+
+        case "linear_scale": {
+            const min = section.scaleMin ?? 1;
+            const max = section.scaleMax ?? 5;
+            const maxOptionsHtml = [2,3,4,5,6,7,8,9,10].map(function(n) {
+                return `<option value="${n}" ${max === n ? "selected" : ""}>${n}</option>`;
+            }).join("");
+            return `
+                <div class="ScaleConfig">
+                    <div class="ScaleRangeRow">
+                        <label>From
+                            <select id="ScaleMin-${id}">
+                                <option value="0" ${min === 0 ? "selected" : ""}>0</option>
+                                <option value="1" ${min === 1 ? "selected" : ""}>1</option>
+                            </select>
+                        </label>
+                        <label>To
+                            <select id="ScaleMax-${id}">
+                                ${maxOptionsHtml}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="ScaleLabelRow">
+                        <input type="text" id="ScaleMinLabel-${id}" placeholder="Label for lowest value (optional)" value="${section.scaleMinLabel || ""}">
+                        <input type="text" id="ScaleMaxLabel-${id}" placeholder="Label for highest value (optional)" value="${section.scaleMaxLabel || ""}">
+                    </div>
+                </div>
+            `;
+        }
+
+        case "mcq_grid":
+        case "checkbox_grid": {
+        const rows = (section.gridRows && section.gridRows.length) ? section.gridRows : ["Row 1"];
+        const columns = (section.options && section.options.length) ? section.options : ["Column 1"];
+
+    let rowsHtml = "";
+    rows.forEach(function(row, idx) {
+        rowsHtml += createGridItem(id, idx, row, "row");
+    });
+
+    let colsHtml = "";
+    columns.forEach(function(col, idx) {
+        colsHtml += createGridItem(id, idx, col, "col");
+    });
+
+    return `
+        <div class="GridConfig">
+
+            <div class="GridConfigCol">
+                <label class="GridConfigLabel">Rows</label>
+                <div class="GridItemList" id="gridrows-${id}">
+                    ${rowsHtml}
+                </div>
+                <button type="button" class="AddGridBtn" onclick="addGridItem(${id}, 'row')">+ Add row</button>
+            </div>
+
+            <div class="GridConfigCol">
+                <label class="GridConfigLabel">Columns</label>
+                <div class="GridItemList" id="gridcols-${id}">
+                    ${colsHtml}
+                </div>
+                <button type="button" class="AddGridBtn" onclick="addGridItem(${id}, 'col')">+ Add column</button>
+            </div>
+
+        </div>
+
+        <div class="GridPreview">
+            ${renderGridPreview(rows, columns, qType)}
+        </div>
+    `;
+}
+
+        case "date":
+            return `<input type="date" class="DatePreview" disabled>`;
+
+        case "time":
+            return `<input type="time" class="TimePreview" disabled>`;
+
+        default:
+            return "";
+    }
+
+}
+function createGridItem(questionId, itemIndex, value, kind) {
+
+    const prefix = kind === "row" ? "gridrow" : "gridcol";
+
+    return `
+        <div class="GridItem" data-kind="${kind}">
+            <input type="text" class="GridItemInput" id="${prefix}-${questionId}-${itemIndex}" value="${value}">
+            <button type="button" class="delete-option-btn" onclick="deleteGridItem(this, ${questionId}, '${kind}')" title="Remove">❌</button>
+        </div>
+    `;
+
+}
+
+function addGridItem(questionId, kind) {
+
+    syncSectionsFromDOM();
+
+    const section = sections.find(function(s) { return s.id === questionId; });
+    if (!section) return;
+
+    if (kind === "row") {
+        if (!section.gridRows) section.gridRows = [];
+        section.gridRows.push("Row " + (section.gridRows.length + 1));
+    } else {
+        if (!section.options) section.options = [];
+        section.options.push("Column " + (section.options.length + 1));
+    }
+
+    renderSections();
+
+}
+
+function deleteGridItem(button, questionId, kind) {
+
+    const list = button.closest(".GridItemList");
+
+    if (list.children.length <= 1) return;   // keep at least one row/column
+
+    button.closest(".GridItem").remove();
+
+}
+
+function renderGridPreview(rows, columns, qType) {
+
+    const inputType = qType === "mcq_grid" ? "radio" : "checkbox";
+
+    let headerCells = columns.map(function(col) {
+        return `<th>${col}</th>`;
+    }).join("");
+
+    let bodyRows = rows.map(function(row, rIdx) {
+        let cells = columns.map(function(col, cIdx) {
+            return `<td><input type="${inputType}" disabled name="preview-${rIdx}"></td>`;
+        }).join("");
+        return `<tr><td class="GridPreviewRowLabel">${row}</td>${cells}</tr>`;
+    }).join("");
+
+    return `
+        <table class="GridPreviewTable">
+            <tr><th></th>${headerCells}</tr>
+            ${bodyRows}
+        </table>
+    `;
+
+}
+
+/* =========================================================
+   CHANGE QUESTION TYPE
+   ========================================================= */
+
+function changeQuestionType(id, newType) {
+
+    syncSectionsFromDOM();
+
+    const section = sections.find(function(s) { return s.id === id; });
+    if (!section) return;
+
+    section.questionType = newType;
+
+    if ((newType === "mcq" || newType === "checkbox" || newType === "dropdown") && (!section.options || !section.options.length)) {
+        section.options = ["Option 1"];
+    }
+
+    if (newType === "mcq_grid" || newType === "checkbox_grid") {
+        if (!section.gridRows || !section.gridRows.length) section.gridRows = ["Row 1"];
+        if (!section.options || !section.options.length) section.options = ["Column 1"];
+    }
+
+    renderSections();
+
+}
+      
+
+/* =========================================================
+   CREATE OPTION
+   ========================================================= */
+function createOption(questionId, optionIndex, value, qType) {
+
+    const marker = qType === "checkbox" ? "☐" : qType === "dropdown" ? (optionIndex + 1) + "." : "○";
+
+    return `
+        <div class="Option" style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <span class="OptionMarker">${marker}</span>
+            <input type="text" class="OptionLabel" value="${value}" style="flex:1">
+            <button type="button" class="delete-option-btn" onclick="deleteOption(this)" title="Delete Option"
+                    style="background:none; border:none; cursor:pointer; font-size:14px; padding:5px 10px;">❌</button>
+        </div>
+    `;
+
+}
+
+
+
+/* =========================================================
+   ADD OPTION
+   ========================================================= */
+
+function addOption(questionId) {
+
+    const section = sections.find(function(s) { return s.id === questionId; });
+    const qType = section ? section.questionType : "mcq";
+
+    const container = document.getElementById("options-" + questionId);
+    const optionNumber = container.children.length + 1;
+
+    const option = document.createElement("div");
+    option.innerHTML = createOption(questionId, optionNumber - 1, "Option " + optionNumber, qType);
+    container.appendChild(option.firstElementChild);
+
+}
+
+
+/* =========================================================
+   DELETE OPTION
+   ========================================================= */
+
+function deleteOption(button) {
+
+    const container = button.closest(
+        ".OptionsContainer"
+    );
+
+
+    /*
+       Same behavior as React:
+
+       if (options.length <= 1) return;
+    */
+
+    if (container.children.length <= 1) {
+
+        return;
+
+    }
+
+
+    button.closest(".Option").remove();
+
+}
+
+
+/* =========================================================
+   DESCRIPTION BLOCK
+   ========================================================= */
+
+function createDescription(section) {
+
+    const id = section.id;
+    const titleValue = section.title || "Untitled Title";
+    const descValue = section.description || "";
+
+    return `
+        <div class="DescBlock">
+
+            <input type="text" id="Destitle-${id}" class="Destitle" value="${titleValue}">
+
+            <textarea id="Desdesc-${id}" class="Fdes" placeholder="Enter description text...">${descValue}</textarea>
+
+            <div class="block-actions-row">
+                ${createRequired(id, section.required)}
+                <button type="button" class="delete-block-btn" onclick="deleteSection(${id})" title="Delete block">🗑️</button>
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+
+/* =========================================================
+   IMAGE BLOCK
+   ========================================================= */
+/*
+
+function createImage(section) {
+
+    const id = section.id;
+
+    const previewHtml = section.imagePreviewURL
+        ? `<img src="${section.imagePreviewURL}" alt="uploaded" class="PreviewImage">`
+        : `🖼️ Click to upload an image
+           <input type="file" accept="image/*" onchange="handleImage(this, '${id}')" style="display:none">`;
+
+    return `
+        <div class="ImageBlock">
+
+            <label class="ImageUpload" id="imageUpload-${id}">
+                ${previewHtml}
+            </label>
+
+            <button type="button" class="delete-block-btn" onclick="deleteSection(${id})" title="Delete block">🗑️</button>
+
+        </div>
+    `;
+
+}  */
+
+
+ function createImage(section) {
+
+    const id = section.id;
+
+    const previewSrc = section.imagePreviewURL || section.imageUrl;
+
+    const previewHtml = previewSrc
+        ? `<img src="${previewSrc}" alt="uploaded" class="PreviewImage">`
+        : `🖼️ Click to upload an image
+           <input type="file" accept="image/*" onchange="handleImage(this, '${id}')" style="display:none">`;
+
+    return `
+        <div class="ImageBlock">
+
+            <label class="ImageUpload" id="imageUpload-${id}">
+                ${previewHtml}
+            </label>
+
+            <button type="button" class="delete-block-btn" onclick="deleteSection(${id})" title="Delete block">🗑️</button>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   IMAGE UPLOAD
+   ========================================================= */
+
+
+
+
+/* =========================================================
+   SECTION BLOCK
+   ========================================================= */
+
+function createSectionBlock(section, index) {
+
+    const id = section.id;
+
+    let sectionNumber = 0;
+    for (let i = 0; i <= index; i++) {
+        if (sections[i].type === "sec") sectionNumber++;
+    }
+
+    const titleValue = section.title || "Untitled Section";
+    const descValue = section.description || "";
+
+    return `
+        <div class="SecBlock">
+
+            <h1>Section ${sectionNumber}</h1>
+
+            <input type="text" id="Sectitle-${id}" class="Sectitle" value="${titleValue}">
+
+            <textarea id="Secdesc-${id}" class="Secdes" placeholder="Enter section description...">${descValue}</textarea>
+
+            <div class="block-actions-row">
+                ${createRequired(id, section.required)}
+                <button type="button" class="delete-block-btn" onclick="deleteSection(${id})" title="Delete block">🗑️</button>
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   REQUIRED SWITCH
+   ========================================================= */
+
+function createRequired(id, checked) {
+
+    return `
+        <div class="isRequired">
+            Is Required
+            <label class="switch">
+                <input type="checkbox" id="Required-${id}" ${checked ? "checked" : ""}>
+                <span class="slider round"></span>
+            </label>
+        </div>
+    `;
+
+}
+renderSections();
+</script>
+
+{% endblock %}

@@ -1,0 +1,178 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Your Account</title>
+
+    <!-- Your existing Signup CSS -->
+    <link rel="stylesheet" href="{% static 'Signup.css' %}">
+
+</head>
+
+<body>
+
+    <main class="signup-layout">
+
+        <div class="auth-form-col">
+
+            <div class="auth-card">
+
+                <h1>Create Your Account</h1>
+
+
+                <form method="POST" action="{% url 'signup' %}">
+
+                    {% csrf_token %}
+
+
+                    <!-- Name -->
+
+                    <div class="form-group">
+
+                        <label class="field-label">
+                            Name
+                        </label>
+
+                        <input
+                            class="form-control"
+                            type="text"
+                            name="name"
+                            placeholder="Your Full Name"
+                            required
+                            autofocus
+                        >
+
+                    </div>
+
+
+                    <!-- Email -->
+
+                    <div class="form-group">
+                        
+{% if messages %}
+    {% for m in messages %}
+        <div style="padding:10px 14px; background:#fce8e6; color:#d93025; border-radius:6px; margin-bottom:12px; font-size:14px;">{{ m }}</div>
+    {% endfor %}
+{% endif %}
+
+                        <label class="field-label">
+                            Email
+                        </label>
+
+                        <input
+                            class="form-control"
+                            type="email"
+                            name="email"
+                            placeholder="you@kompasspakistan.com.pk"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- Department -->
+
+                  <div class="form-group">
+    <label class="field-label">Department</label>
+
+    <!--<select class="form-control" name="department_name" required>
+        <option value="">— Select department —</option>
+        <option value="F">Finance</option>
+        <option value="HR">HR</option>
+        <option value="Ink">Ink Store</option>
+        <option value="It">IT</option>
+        <option value="Maintain">Maintenance</option>
+        <option value="Product">Production</option>
+        <option value="Sales">Sales</option>
+        <option value="Store">Store</option>
+    </select> -->
+    <select name="department" required>
+    <option value="">Select department</option>
+    {% for d in departments %}
+        <option value="{{ d.pk }}">{{ d.name }}</option>
+    {% endfor %}
+</select>
+</div>
+
+
+                    <!-- Password -->
+
+                    <div class="form-group">
+
+                        <label class="field-label">
+                            Password
+                        </label>
+
+                        <input
+                            class="form-control"
+                            type="password"
+                            name="password"
+                            placeholder="••••••••"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- Confirm Password -->
+
+                    <div class="form-group">
+
+                        <label class="field-label">
+                            Confirm password
+                        </label>
+
+                        <input
+                            class="form-control"
+                            type="password"
+                            name="confirm_password"
+                            placeholder="Re-enter password"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- Create Account -->
+
+                    <button
+                        class="btn btn-primary"
+                        type="submit"
+                        style="width:100%;justify-content:center;margin-top:6px;"
+                    >
+                        Create Account
+                    </button>
+
+
+                </form>
+
+
+                <!-- Login link -->
+
+                <div class="auth-links">
+
+                    Already have an account?
+
+                    <a href="/">
+                        Login
+                    </a>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

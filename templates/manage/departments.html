@@ -1,0 +1,51 @@
+{% extends "manage/base.html" %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<h1>Departments</h1>
+<p class="adm-sub">Create departments and choose the HOD / supervisor of each.</p>
+
+<div class="card">
+    <h2>Add department</h2>
+    <form class="inline" method="post" action="{% url 'create_department' %}">
+        {% csrf_token %}
+        <input name="name" placeholder="Department name" required>
+        <button type="submit">Add</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>All departments</h2>
+    <div class="table-wrap">
+    <table>
+        <tr><th>Department</th><th>Members</th><th>HOD / Supervisor</th><th></th></tr>
+        {% for d in departments %}
+        <tr>
+            <td>{{ d.name }}</td>
+            <td>{{ d.member_count }}</td>
+            <td>
+                <form class="inline" method="post" action="{% url 'set_hod' d.pk %}">
+                    {% csrf_token %}
+                    <select name="hod">
+                        <option value="">— none —</option>
+                        {% for u in users %}
+                        <option value="{{ u.user_id }}" {% if d.hod_id == u.user_id %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit">Save</button>
+                </form>
+            </td>
+            <td>
+                <form class="inline" method="post" action="{% url 'delete_department' d.pk %}"
+                      onsubmit="return confirm('Delete department {{ d.name|escapejs }}? Its users will have no department.');">
+                    {% csrf_token %}
+                    <button type="submit" class="danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="muted">No departments yet.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

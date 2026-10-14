@@ -1,0 +1,6 @@
+A new response was submitted to "{{ form.title }}".
+
+Submitted: {{ response.submitted_at }}
+{% if response.respondent %}By: {{ response.respondent.name }} ({{ response.respondent.email }}){% endif %}
+
+View all responses in the Kompass Forms dashboard.

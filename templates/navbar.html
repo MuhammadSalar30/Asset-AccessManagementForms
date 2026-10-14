@@ -1,0 +1,907 @@
+{% load static %}
+
+<section class="navbar-layout">
+{% csrf_token %}
+<div class="navbar-top-row">
+
+    <!-- Logo -->
+    <div class="navbar-brand">
+        <img src="{% static 'assets/kompass-logo.png' %}" alt="Kompass Logo" height="40">
+    </div>
+{% if request.resolver_match.url_name == 'forms' or request.resolver_match.url_name == 'edit_form' %}
+    <!-- Form Title -->
+    <div class="navbar-title-wrap">
+        <input
+            id="formTitleBody"
+            type="text"
+            class="FormTitleBody"
+            value="{{ form.title|default:'Untitled Form' }}"
+            autocomplete="off"
+        >
+    </div>
+    
+
+    <!-- Right-side actions -->
+    <div class="navbar-actions">
+
+        <button class="btn-save" type="button" onclick="saveForm()">
+            Save Form
+        </button>
+
+        <button class="btn-publish" type="button" onclick="openPublishPopup()">
+            Publish Form
+        </button>
+{% else %}
+    <div style="flex:1"></div>
+{% endif %}
+    <!---   <span class="role-pill">User</span>   -->
+ <span class="role-pill">{{ request.session.user_role|default:"user"|title }}</span>  
+        <div class="user-chip">
+            <span class="user-avatar">{{ request.session.user_name|slice:":1"|upper }}</span>
+            <span class="user-name">{{ request.session.user_name }}</span>
+        </div>
+        {% if request.session.user_role == "admin" %}
+    <a href="{% url 'manage_org' %}">Manage</a>
+{% endif %}
+           <a href="{% url 'logout' %}" class="lp-btn-logout" title="Logout">
+        Logout
+    </a>
+
+    </div>
+
+</div>
+<!--
+<nav class="FormNavBar">
+    <a href="{% url 'forms' %}">Forms</a>
+    <a id="navResponsesLink"
+   href="{% if form.form_id %}{% url 'view_responses' form.form_id %}{% else %}#{% endif %}"
+   {% if not form.form_id %}onclick="alert('Save the form first to see its responses.'); return false;"{% endif %}>
+    Responses
+</a>
+   <!-- <a href="/settings/">Settings</a> 
+</nav>  -->
+  <!--  <div class="navbar-top-row">
+
+
+  
+        <img
+            src="{% static 'assets/kompass-logo.png' %}"
+            alt="Kompass Logo"
+            height="60"
+        >
+       
+    <div>
+        <input id="formTitleBody" type="text" class="FormTitleBody"  value="{{ form.title|default:'Untitled Form' }}"
+        style="
+         font-size: 22px;
+        font-weight: 500;
+        padding: 8px 4px;
+        width: 300px;
+        height: 42px;
+        border: none;
+        border-bottom: 2px solid #ccc;
+        outline: none;
+        background: transparent;
+        transition: border-color 0.15s ease;
+    "
+    onfocus="this.style.borderBottomColor='#673ab7'"
+    onblur="this.style.borderBottomColor='#ccc'"
+        >
+    </div>
+
+    Role -->
+
+        <!-- Form Title -->
+    <!---   <div>
+            <input
+                id="formTitleBody"
+                type="text"
+                class="FormTitleBody"
+                value="Untitled Form"
+            >
+        </div> -->
+  <!--<div class="navbar-actions" style="display:flex; gap:10px; align-items:center; margin-left:auto;">  
+        <button
+            class="publish-btn"
+            type="button"
+            onclick="saveForm()"
+        >
+            Save Form
+        </button>
+      
+        <button
+            class="publish-btn"
+            type="button"
+            onclick="openPublishPopup()"
+        >
+            Publish Form
+        </button>
+</div>  
+      
+        <span class="role-pill">
+            User
+        </span> 
+
+        
+        <div class="user-chip">
+            <span class="avatar"></span>
+            {{ request.session.user_name }}
+        </div>
+
+    </div>
+
+
+    
+    <nav class="FormNavBar">
+         <a href="{% url 'forms' %}">
+            Forms
+        </a>
+
+
+
+
+        <a href="{% if form.form_id %}{% url 'view_responses' form.form_id %}{% else %}#{% endif %}">
+            Responses
+        </a>
+
+        <a href="/settings/">
+            Settings
+        </a>
+
+    </nav>  -->
+<style>
+.publish-modal, .manage-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.manage-modal { z-index: 1100; }
+
+.popup-content-box {
+    width: 420px;
+    max-width: 90vw;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
+</section>
+
+
+<!-- =====================================================
+     PUBLISH POPUP
+     ===================================================== -->
+
+<!--<div
+    id="publishPopup"
+    class="publish-modal"
+    style="display:none;"
+>
+
+    <div
+        class="popup-content-box"
+        style="
+            padding:20px;
+            background:#fff;
+            border-radius:8px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.15);
+        "
+    >
+
+        <h3>
+            Publish Form
+        </h3>
+
+        <hr class="horizontal-line">
+
+        <h4>
+            Responders
+        </h4>
+
+        <div class="manage-sec">
+
+            Anyone with the link
+
+            <button
+                type="button"
+                class="manage-btn"
+            >
+                Manage
+            </button>
+
+            <hr class="horizontal-line">
+
+        </div>
+
+
+         Publish status / link 
+        <div id="publishStatus" style="display:none; margin-bottom:16px;">
+            <p style="margin:0 0 6px;">Your form is live:</p>
+            <div style="display:flex; gap:8px;">
+                <input id="publishLinkInput" type="text" readonly
+                       style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                <button type="button" onclick="copyPublishLink()">Copy</button>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-start; gap:12px;">
+            <button type="button" onclick="closePublishPopup()">Close</button>
+            <button type="button" id="publishActionBtn" onclick="publishForm()">Publish</button>
+        </div>
+
+    </div>
+
+</div>  -->
+
+<!-- single source of truth for the saved form id -->
+<input type="hidden" id="currentFormId" value="{{ form.form_id|default:'' }}">
+
+<div id="publishPopup" class="publish-modal">
+    <div class="popup-content-box">
+
+        <h3>Publish Form</h3>
+        <hr class="horizontal-line">
+
+        <h4>Responders</h4>
+
+        <div class="manage-sec">
+            <span id="accessLabel">Anyone with the link</span>
+            <button type="button" class="manage-btn" onclick="openManagePopup()">Manage</button>
+            <hr class="horizontal-line">
+        </div>
+
+        <div id="publishStatus" style="display:none; margin-bottom:16px;">
+            <p style="margin:0 0 6px;">Your form is live:</p>
+            <div style="display:flex; gap:8px;">
+                <input id="publishLinkInput" type="text" readonly
+                       style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                <button type="button" onclick="copyPublishLink()">Copy</button>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-start; gap:12px;">
+            <button type="button" onclick="closePublishPopup()">Close</button>
+            <button type="button" id="publishActionBtn" onclick="publishForm()">Publish</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="managePopup" class="manage-modal">
+    <div class="popup-content-box">
+
+        <h3>Manage Access</h3>
+        <hr class="horizontal-line">
+
+        <label style="display:block; margin-bottom:10px;">
+            <input type="radio" name="accessType" value="anyone" onchange="setAccessType('anyone')">
+            Anyone with the link
+        </label>
+
+        <label style="display:block; margin-bottom:10px;">
+            <input type="radio" name="accessType" value="restricted" onchange="setAccessType('restricted')">
+            Restricted — only invited people
+        </label>
+        {% if request.session.user_role == "admin" %}
+        <label style="display:block; margin-bottom:10px;">
+            <input type="radio" name="accessType" value="departments" onchange="setAccessType('departments')">
+            Selected departments
+        </label>
+        {% endif %}
+
+        <div id="inviteSection" style="display:none; margin-top:10px;">
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <input id="inviteEmailInput" type="email" placeholder="name@example.com"
+                       style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                <select id="invitePermissionSelect" style="padding:6px; border:1px solid #ccc; border-radius:4px;">
+                    <option value="respond">Can respond</option>
+                    <option value="edit">Can edit</option>
+                    <option value="both">Can edit and respond</option>
+                </select>
+                <button type="button" onclick="addInvite()">Add</button>
+            </div>
+            <ul id="inviteList" style="list-style:none; padding:0; margin:0; max-height:160px; overflow-y:auto;"></ul>
+        </div>
+            <div id="deptSection" style="display:none; margin-top:10px;">
+            <div style="font-weight:600; margin-bottom:6px;">Share with departments</div>
+            <div id="deptList" style="max-height:180px; overflow-y:auto; border:1px solid #dadce0; border-radius:6px; padding:8px;"></div>
+            <button type="button" onclick="saveDepartments()" style="margin-top:8px;">Save departments</button>
+            <div id="deptMsg" style="font-size:12px; color:#5f6368; margin-top:6px;"></div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-start; gap:12px; margin-top:16px;">
+            <button type="button" onclick="closeManagePopup()">Done</button>
+        </div>
+
+    </div>
+</div>
+<script>
+    const ACCESS_LABELS = {
+    anyone: "Anyone with the link",
+    restricted: "Restricted",
+    departments: "Selected departments"
+};
+
+function applyAccessUI(accessType) {
+    document.getElementById("inviteSection").style.display = accessType === "restricted" ? "block" : "none";
+    const deptSection = document.getElementById("deptSection");
+    if (deptSection) deptSection.style.display = accessType === "departments" ? "block" : "none";
+    document.getElementById("accessLabel").textContent = ACCESS_LABELS[accessType] || "";
+}
+
+function renderDepartments(departments) {
+    const box = document.getElementById("deptList");
+    if (!box) return;
+    box.innerHTML = "";
+    departments.forEach(function(d) {
+        const label = document.createElement("label");
+        label.style.cssText = "display:block; padding:3px 0;";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "deptCheck";
+        cb.value = d.id;
+        cb.checked = d.selected;
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(" " + d.name));
+        box.appendChild(label);
+    });
+}
+
+async function saveDepartments() {
+
+    const formId = getFormId();
+    const formData = new FormData();
+    formData.append("action", "set_departments");
+    document.querySelectorAll(".deptCheck:checked").forEach(function(c) {
+        formData.append("departments", c.value);
+    });
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    document.getElementById("deptMsg").textContent = data.success
+        ? "Saved." + (data.emailed ? ` ${data.emailed} employee(s) emailed.` : "")
+        : (data.message || "Could not save.");
+}
+
+    function csrf() {
+    return document.querySelector("[name=csrfmiddlewaretoken]").value;
+}
+
+function getFormId() {
+    return document.getElementById("currentFormId").value;
+}
+
+/* ---------------- Save ---------------- */
+async function saveForm() {
+
+    syncSectionsFromDOM();
+
+    const title = document.getElementById("formTitleBody") 
+        ? document.getElementById("formTitleBody").value 
+        : "";
+    const descriptionElement = document.getElementById("formDescription");
+    const description = descriptionElement ? descriptionElement.value : "";
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    formData.append("form_id", getFormId());   // khali hoga naye form ke liye, varna existing id
+
+    sections.forEach(function(section, index) {
+
+        formData.append(`element_type_${index}`, section.type);
+        formData.append(`is_required_${index}`, section.required ? "true" : "false");
+        formData.append(`element_db_id_${index}`, section.dbId || "");
+
+        if (section.type === "question") {
+
+            formData.append(`question_text_${index}`, section.question || "");
+            formData.append(`question_type_${index}`, section.questionType || "short");
+
+            (section.options || []).forEach(function(option) {
+                formData.append(`options_${index}`, option);
+            });
+
+            if (section.questionType === "file_upload") {
+                formData.append(`max_files_${index}`, section.maxFiles || 1);
+            }
+
+            if (section.questionType === "linear_scale") {
+                formData.append(`scale_min_${index}`, section.scaleMin ?? 1);
+                formData.append(`scale_max_${index}`, section.scaleMax ?? 5);
+                formData.append(`scale_min_label_${index}`, section.scaleMinLabel || "");
+                formData.append(`scale_max_label_${index}`, section.scaleMaxLabel || "");
+            }
+
+            if (section.questionType === "mcq_grid" || section.questionType === "checkbox_grid") {
+                formData.append(`grid_rows_${index}`, (section.gridRows || []).join("\n"));
+            }
+
+        } else if (section.type === "text" || section.type === "sec") {
+
+            formData.append(`title_${index}`, section.title || "");
+            formData.append(`description_${index}`, section.description || "");
+
+        } else if (section.type === "image" && section.imageFile) {
+
+            formData.append(`image_${index}`, section.imageFile);
+        }
+
+    });
+
+    formData.append("element_count", sections.length);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    try {
+        const response = await fetch("{% url 'save_form' %}", { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Form saved successfully!");
+            document.getElementById("currentFormId").value = data.form_id;
+
+            const respLink = document.getElementById("navResponsesLink");
+            if (respLink) {
+                respLink.href = `/forms/${data.form_id}/responses/`;
+                respLink.removeAttribute("onclick");
+            }
+
+        } else {
+            alert(data.message || "Unable to save form.");
+        }
+
+    } catch (error) {
+        console.error("Save form error:", error);
+        alert("An error occurred while saving the form.");
+    }
+
+}
+/*
+async function saveForm() {
+
+    syncSectionsFromDOM();
+
+    const title = document.getElementById("formTitleBody").value;
+    const descriptionElement = document.getElementById("formDescription");
+    const description = descriptionElement ? descriptionElement.value : "";
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+
+    sections.forEach(function(section, index) {
+
+        formData.append(`element_type_${index}`, section.type);
+        formData.append(`is_required_${index}`, section.required ? "true" : "false");
+
+        if (section.type === "question") {
+
+            formData.append(`question_text_${index}`, section.question || "");
+            formData.append(`question_type_${index}`, section.questionType || "short");
+
+            (section.options || []).forEach(function(option) {
+                formData.append(`options_${index}`, option);
+            });
+
+            if (section.questionType === "file_upload") {
+                formData.append(`max_files_${index}`, section.maxFiles || 1);
+            }
+
+            if (section.questionType === "linear_scale") {
+                formData.append(`scale_min_${index}`, section.scaleMin ?? 1);
+                formData.append(`scale_max_${index}`, section.scaleMax ?? 5);
+                formData.append(`scale_min_label_${index}`, section.scaleMinLabel || "");
+                formData.append(`scale_max_label_${index}`, section.scaleMaxLabel || "");
+            }
+
+            if (section.questionType === "mcq_grid" || section.questionType === "checkbox_grid") {
+                formData.append(`grid_rows_${index}`, (section.gridRows || []).join("\n"));
+            }
+
+        } else if (section.type === "text" || section.type === "sec") {
+
+            formData.append(`title_${index}`, section.title || "");
+            formData.append(`description_${index}`, section.description || "");
+
+        } else if (section.type === "image" && section.imageFile) {
+
+            formData.append(`image_${index}`, section.imageFile);
+        }
+
+    });   // <-- the loop ends here; nothing below may use `data` inside it
+
+    formData.append("element_count", sections.length);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    try {
+        const response = await fetch("{% url 'save_form' %}", { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+
+            alert("Form saved successfully!");
+            document.getElementById("currentFormId").value = data.form_id;
+
+            const respLink = document.getElementById("navResponsesLink");
+            if (respLink) {
+                respLink.href = `/forms/${data.form_id}/responses/`;
+                respLink.removeAttribute("onclick");
+            }
+
+        } else {
+            alert(data.message || "Unable to save form.");
+        }
+
+    } catch (error) {
+        console.error("Save form error:", error);
+        alert("An error occurred while saving the form.");
+    }
+
+}  */
+/*
+async function saveForm() {
+
+    syncSectionsFromDOM();
+
+    const title = document.getElementById("formTitleBody")
+        ? document.getElementById("formTitleBody").value
+        : document.getElementById("formTitle").value; 
+    const title = document.getElementById("formTitleBody").value;
+    const descriptionElement = document.getElementById("formDescription");
+    const description = descriptionElement ? descriptionElement.value : "";
+
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("description", description);
+    sections.forEach(function(section, index) {
+
+    formData.append(`element_type_${index}`, section.type);
+    formData.append(`is_required_${index}`, section.required ? "true" : "false");
+    const navTitle = document.getElementById("formTitleBody");
+    const bodyTitle = document.getElementById("formHeadingInput");
+
+    navTitle.addEventListener("input", function () { bodyTitle.value = this.value; });
+    bodyTitle.addEventListener("input", function () { navTitle.value = this.value; });
+
+    if (section.type === "question") {
+
+        formData.append(`question_text_${index}`, section.question || "");
+        formData.append(`question_type_${index}`, section.questionType || "short");
+
+        (section.options || []).forEach(function(option) {
+            formData.append(`options_${index}`, option);
+        });
+
+        if (section.questionType === "file_upload") {
+            formData.append(`max_files_${index}`, section.maxFiles || 1);
+        }
+
+        if (section.questionType === "linear_scale") {
+            formData.append(`scale_min_${index}`, section.scaleMin ?? 1);
+            formData.append(`scale_max_${index}`, section.scaleMax ?? 5);
+            formData.append(`scale_min_label_${index}`, section.scaleMinLabel || "");
+            formData.append(`scale_max_label_${index}`, section.scaleMaxLabel || "");
+        }
+
+        if (section.questionType === "mcq_grid" || section.questionType === "checkbox_grid") {
+            formData.append(`grid_rows_${index}`, (section.gridRows || []).join("\n"));
+        }
+        if (data.success) {
+           alert("Form saved successfully!");
+           document.getElementById("currentFormId").value = data.form_id;
+           const respLink = document.getElementById("navResponsesLink");
+           respLink.href = `/forms/${data.form_id}/responses/`;
+           respLink.removeAttribute("onclick");
+}
+
+    } else if (section.type === "text" || section.type === "sec") {
+        formData.append(`title_${index}`, section.title || "");
+        formData.append(`description_${index}`, section.description || "");
+
+    } else if (section.type === "image" && section.imageFile) {
+        formData.append(`image_${index}`, section.imageFile);
+    }
+
+});
+
+
+
+    formData.append("element_count", sections.length);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    try {
+        const response = await fetch("{% url 'save_form' %}", { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            alert("Form saved successfully!");
+            document.getElementById("currentFormId").value = data.form_id;
+        } else {
+            alert(data.message || "Unable to save form.");
+        }
+
+    } catch (error) {
+        console.error("Save form error:", error);
+        alert("An error occurred while saving the form.");
+    }
+
+}  */
+/* ---------------- Publish popup ---------------- */
+
+function openPublishPopup() {
+    document.getElementById("publishPopup").style.display = "flex";
+}
+
+function closePublishPopup() {
+    document.getElementById("publishPopup").style.display = "none";
+}
+
+document.getElementById("publishPopup").addEventListener("click", function (event) {
+    if (event.target === this) closePublishPopup();
+});
+
+/* let isPublished = false; */
+let isPublished = {{ form.is_published|yesno:"true,false" }};
+
+function applyPublishUI() {
+    const statusBox = document.getElementById("publishStatus");
+    const actionBtn = document.getElementById("publishActionBtn");
+    if (isPublished) {
+        document.getElementById("publishLinkInput").value = window.location.origin + "/f/" + getFormId() + "/";
+        statusBox.style.display = "block";
+        actionBtn.textContent = "Unpublish";
+    } else {
+        statusBox.style.display = "none";
+        actionBtn.textContent = "Publish";
+    }
+}
+applyPublishUI();
+
+async function publishForm() {
+
+    const formId = getFormId();
+
+    if (!formId) {
+        alert("Please save the form before publishing.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("action", isPublished ? "unpublish" : "publish");
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    try {
+        const response = await fetch(`/forms/${formId}/publish/`, { method: "POST", body: formData });
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || "Unable to update publish status.");
+            return;
+        }
+
+        isPublished = data.is_published;
+        const statusBox = document.getElementById("publishStatus");
+        const actionBtn = document.getElementById("publishActionBtn");
+
+        if (isPublished) {
+            document.getElementById("publishLinkInput").value = data.publish_link;
+            statusBox.style.display = "block";
+            actionBtn.textContent = "Unpublish";
+        } else {
+            statusBox.style.display = "none";
+            actionBtn.textContent = "Publish";
+        }
+
+    } catch (error) {
+        console.error("Publish form error:", error);
+        alert("An error occurred while publishing the form.");
+    }
+}
+
+function copyPublishLink() {
+    const input = document.getElementById("publishLinkInput");
+    input.select();
+    navigator.clipboard.writeText(input.value);
+}
+
+/* ---------------- Manage popup ---------------- */
+
+async function openManagePopup() {
+
+    const formId = getFormId();
+
+    if (!formId) {
+        alert("Please save the form before managing access.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/forms/${formId}/access/`);
+        const data = await response.json();
+
+        if (!data.success) {
+            alert(data.message || "Unable to load access settings.");
+            return;
+        }
+
+      /*  document.querySelector(`input[name="accessType"][value="${data.access_type}"]`).checked = true;
+        document.getElementById("inviteSection").style.display =
+            data.access_type === "restricted" ? "block" : "none";
+        document.getElementById("accessLabel").textContent =
+            data.access_type === "restricted" ? "Restricted" : "Anyone with the link";
+
+        renderInvites(data.invites);
+        document.getElementById("managePopup").style.display = "flex";   */
+        const radio = document.querySelector(`input[name="accessType"][value="${data.access_type}"]`);
+        if (radio) radio.checked = true;
+        applyAccessUI(data.access_type);
+
+        renderInvites(data.invites);
+        renderDepartments(data.departments || []);
+        document.getElementById("managePopup").style.display = "flex";
+
+    } catch (error) {
+        console.error("Load access error:", error);
+        alert("An error occurred while loading access settings.");
+    }
+}
+
+function closeManagePopup() {
+    document.getElementById("managePopup").style.display = "none";
+}
+
+document.getElementById("managePopup").addEventListener("click", function (event) {
+    if (event.target === this) closeManagePopup();
+});
+
+function renderInvites(invites) {
+    const list = document.getElementById("inviteList");
+    list.innerHTML = "";
+    const permissionLabels = {
+        respond: "Can respond",
+        edit: "Can edit",
+        both: "Can edit and respond",
+    };
+
+    invites.forEach(function(inv) {
+
+        const li = document.createElement("li");
+        li.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:6px 0; gap:8px;";
+
+        const emailSpan = document.createElement("span");
+        emailSpan.textContent = inv.email;
+        emailSpan.style.flex = "1";
+
+        const permSelect = document.createElement("select");
+        ["respond", "edit", "both"].forEach(function(p) {
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = permissionLabels[p];
+            if (p === inv.permission) opt.selected = true;
+            permSelect.appendChild(opt);
+        });
+        permSelect.onchange = function() {
+            updatePermission(inv.invite_id, permSelect.value);
+        };
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.textContent = "Remove";
+        removeBtn.onclick = function() { removeInvite(inv.invite_id); };
+
+        li.appendChild(emailSpan);
+        li.appendChild(permSelect);
+        li.appendChild(removeBtn);
+        list.appendChild(li);
+    });
+}
+async function updatePermission(inviteId, permission) {
+
+    const formId = getFormId();
+    const formData = new FormData();
+    formData.append("action", "update_permission");
+    formData.append("invite_id", inviteId);
+    formData.append("permission", permission);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.message || "Unable to update permission.");
+    }
+}
+/* async function setAccessType(accessType) {
+
+    const formId = getFormId();
+    const formData = new FormData();
+    formData.append("action", "set_access_type");
+    formData.append("access_type", accessType);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.message || "Unable to update access type.");
+        return;
+    }
+
+    document.getElementById("inviteSection").style.display = accessType === "restricted" ? "block" : "none";
+    document.getElementById("accessLabel").textContent =
+        accessType === "restricted" ? "Restricted" : "Anyone with the link";
+} */
+async function setAccessType(accessType) {
+
+    const formId = getFormId();
+    const formData = new FormData();
+    formData.append("action", "set_access_type");
+    formData.append("access_type", accessType);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.message || "Unable to update access type.");
+        return;
+    }
+
+    applyAccessUI(accessType);
+}
+
+async function addInvite() {
+
+    const formId = getFormId();
+    const emailInput = document.getElementById("inviteEmailInput");
+    const permissionSelect = document.getElementById("invitePermissionSelect");
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    const formData = new FormData();
+    formData.append("action", "add_invite");
+    formData.append("email", email);
+    formData.append("permission", permissionSelect.value);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.message || "Unable to add invite.");
+        return;
+    }
+
+    emailInput.value = "";
+    const refreshed = await fetch(`/forms/${formId}/access/`);
+    renderInvites((await refreshed.json()).invites);
+}
+
+async function removeInvite(inviteId) {
+
+    const formId = getFormId();
+    const formData = new FormData();
+    formData.append("action", "remove_invite");
+    formData.append("invite_id", inviteId);
+    formData.append("csrfmiddlewaretoken", csrf());
+
+    const response = await fetch(`/forms/${formId}/access/`, { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (!data.success) {
+        alert(data.message || "Unable to remove invite.");
+        return;
+    }
+
+    const refreshed = await fetch(`/forms/${formId}/access/`);
+    renderInvites((await refreshed.json()).invites);
+}
+
+</script>

@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Organization</title>
+    <link rel="stylesheet" href="{% static 'Navbar.css' %}">
+    <style>
+        body { margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif; background:#f8f9fa; }
+        .wrap { max-width:1000px; margin:0 auto; padding:40px 16px; }
+        .card { background:#fff; border:1px solid #dadce0; border-radius:8px; padding:18px; margin-bottom:24px; }
+        table { width:100%; border-collapse:collapse; font-size:14px; margin-top:12px; }
+        th, td { text-align:left; padding:8px; border-bottom:1px solid #eee; }
+        input, select, button { padding:7px 10px; font-size:14px; }
+        button { background:#673ab7; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+        .msg { padding:8px 12px; background:#e8f0fe; border-radius:6px; margin-bottom:8px; }
+        form.inline { display:inline; margin:0; }
+    </style>
+</head>
+<body>
+{% include "navbar.html" %}
+<div class="wrap">
+    <h1>Manage Organization</h1>
+
+    {% for m in messages %}<div class="msg">{{ m }}</div>{% endfor %}
+
+    <div class="card">
+        <h2>Departments</h2>
+        <form class="inline" method="post" action="{% url 'create_department' %}">
+            {% csrf_token %}
+            <input name="name" placeholder="New department name" required>
+            <button type="submit">Add department</button>
+        </form>
+
+        <table>
+            <tr><th>Department</th><th>HOD / Supervisor</th></tr>
+            {% for d in departments %}
+            <tr>
+                <td>{{ d.name }}</td>
+                <td>
+                    <form class="inline" method="post" action="{% url 'set_hod' d.pk %}">
+                        {% csrf_token %}
+                        <select name="hod">
+                            <option value="">— none —</option>
+                            {% for u in users %}
+                                <option value="{{ u.user_id }}" {% if d.hod_id == u.user_id %}selected{% endif %}>{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Save</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Add user</h2>
+        <form class="inline" method="post" action="{% url 'create_user' %}">
+            {% csrf_token %}
+            <input name="name" placeholder="Full name" required>
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="password" type="password" placeholder="Temporary password" required>
+            <select name="department">
+                <option value="">No department</option>
+                {% for d in departments %}<option value="{{ d.pk }}">{{ d.name }}</option>{% endfor %}
+            </select>
+            <button type="submit">Create user</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Users</h2>
+        <table>
+            <tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th></th></tr>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.department.name|default:"—" }}</td>
+                <td>{{ u.role }}</td>
+                <td>
+                    {% if u.user_id != me.user_id %}
+                    <form class="inline" method="post" action="{% url 'toggle_admin' u.user_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="make_admin" value="{% if u.is_admin %}0{% else %}1{% endif %}">
+                        <button type="submit">{% if u.is_admin %}Remove admin{% else %}Make admin{% endif %}</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,877 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Form Settings</title>
+
+    <link rel="stylesheet" href="{% static 'Settings.css' %}">
+    <link rel="stylesheet" href="{% static 'Navbar.css' %}">
+</head>
+
+<body>
+
+    {% include "navbar.html" %}
+
+
+    <div class="Settings">
+
+        <!-- ================= HEADER ================= -->
+
+        <div class="Settings-header">
+
+            <h1>Form settings</h1>
+
+            <p>
+                Changes apply to this form only, not your other forms.
+            </p>
+
+        </div>
+
+
+        <!-- ================= MAIN LAYOUT ================= -->
+
+        <div class="Settings-layout">
+
+            <!-- ================= LEFT NAVIGATION ================= -->
+
+            <nav class="Settings-nav">
+
+                <button
+                    type="button"
+                    class="Settings-navItem is-active"
+                    onclick="showSection('general', this)"
+                >
+                    General
+                </button>
+
+                <button
+                    type="button"
+                    class="Settings-navItem"
+                    onclick="showSection('presentation', this)"
+                >
+                    Presentation
+                </button>
+
+                <button
+                    type="button"
+                    class="Settings-navItem"
+                    onclick="showSection('notifications', this)"
+                >
+                    Notifications
+                </button>
+
+                <button
+                    type="button"
+                    class="Settings-navItem"
+                    onclick="showSection('sharing', this)"
+                >
+                    Sharing & access
+                </button>
+
+            </nav>
+
+
+            <!-- ================= SETTINGS CONTENT ================= -->
+
+            <div class="Settings-content">
+
+
+                <!-- ================================================= -->
+                <!-- GENERAL -->
+                <!-- ================================================= -->
+
+                <div
+                    id="general"
+                    class="settings-section"
+                >
+
+                    <!-- Responses -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Responses</h2>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+
+                            <!-- Collect email -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Collect email addresses
+                                    </span>
+
+                                    <span class="Row-hint">
+                                        Respondents must sign in to submit the form
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch"
+                                    data-setting="collectEmail"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                            <!-- One response -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Limit to one response per person
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch"
+                                    data-setting="oneResponse"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                            <!-- Allow edit -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Let respondents edit after submitting
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch is-on"
+                                    data-setting="allowEdit"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Defaults -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Defaults</h2>
+
+                            <p>
+                                Applied to new forms you create
+                            </p>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Make questions required by default
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch"
+                                    data-setting="requiredDefault"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- PRESENTATION -->
+                <!-- ================================================= -->
+
+                <div
+                    id="presentation"
+                    class="settings-section"
+                    style="display: none;"
+                >
+
+
+                    <!-- While filling form -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>While filling out the form</h2>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+
+                            <!-- Progress bar -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Show progress bar
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch is-on"
+                                    data-setting="progressBar"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                            <!-- Shuffle -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Shuffle question order
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch"
+                                    data-setting="shuffle"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                            <!-- Another response -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Show link to submit another response
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch is-on"
+                                    data-setting="showAnotherLink"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Confirmation message -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Confirmation message</h2>
+
+                            <p>
+                                Shown after a response is submitted
+                            </p>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+                            <textarea
+                                id="confirmationMessage"
+                                class="TextArea"
+                                placeholder="Your response has been recorded."
+                                rows="3"
+                                oninput="markDirty()"
+                            ></textarea>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- NOTIFICATIONS -->
+                <!-- ================================================= -->
+
+                <div
+                    id="notifications"
+                    class="settings-section"
+                    style="display: none;"
+                >
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Email notifications</h2>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+
+                            <!-- Notify each response -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Notify me of each new response
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch is-on"
+                                    data-setting="notifyEach"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                            <!-- Daily summary -->
+
+                            <label class="Row Row--toggle">
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Send a daily summary instead
+                                    </span>
+
+                                    <span class="Row-hint">
+                                        Only applies if response notifications are on
+                                    </span>
+
+                                </div>
+
+
+                                <span
+                                    class="Switch"
+                                    data-setting="dailySummary"
+                                    onclick="toggleSwitch(this)"
+                                >
+
+                                    <span class="Switch-knob"></span>
+
+                                </span>
+
+                            </label>
+
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- SHARING -->
+                <!-- ================================================= -->
+
+                <div
+                    id="sharing"
+                    class="settings-section"
+                    style="display: none;"
+                >
+
+
+                    <!-- Who can respond -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Who can respond</h2>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+
+                            <!-- Anyone -->
+
+                            <label class="Row Row--radio">
+
+                                <input
+                                    type="radio"
+                                    name="access"
+                                    value="anyone"
+                                    checked
+                                    onchange="markDirty()"
+                                >
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Anyone with the link
+                                    </span>
+
+                                </div>
+
+                            </label>
+
+
+                            <!-- Organization -->
+
+                            <label class="Row Row--radio">
+
+                                <input
+                                    type="radio"
+                                    name="access"
+                                    value="org"
+                                    onchange="markDirty()"
+                                >
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        People in your organization
+                                    </span>
+
+                                </div>
+
+                            </label>
+
+
+                            <!-- Invite only -->
+
+                            <label class="Row Row--radio">
+
+                                <input
+                                    type="radio"
+                                    name="access"
+                                    value="invite"
+                                    onchange="markDirty()"
+                                >
+
+                                <div class="Row-text">
+
+                                    <span class="Row-label">
+                                        Only people I invite
+                                    </span>
+
+                                </div>
+
+                            </label>
+
+
+                        </div>
+
+                    </section>
+
+
+
+                    <!-- Collaborators -->
+
+                    <section class="Panel">
+
+                        <header class="Panel-header">
+
+                            <h2>Collaborators</h2>
+
+                            <p>
+                                Can edit this form's questions and settings
+                            </p>
+
+                        </header>
+
+
+                        <div class="Panel-body">
+
+
+                            <div class="InviteRow">
+
+                                <input
+                                    type="email"
+                                    id="collaboratorEmail"
+                                    class="TextInput"
+                                    placeholder="Add people by email"
+                                    onkeydown="handleInviteKey(event)"
+                                >
+
+
+                                <button
+                                    type="button"
+                                    class="Btn Btn--secondary"
+                                    onclick="addCollaborator()"
+                                >
+                                    Add
+                                </button>
+
+                            </div>
+
+
+                            <ul
+                                id="collaboratorList"
+                                class="CollabList"
+                            ></ul>
+
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ================================================= -->
+        <!-- SAVE BAR -->
+        <!-- ================================================= -->
+
+        <div
+            id="saveBar"
+            class="SaveBar"
+            style="display: none;"
+        >
+
+            <span>
+                You have unsaved changes.
+            </span>
+
+
+            <div class="SaveBar-actions">
+
+                <button
+                    type="button"
+                    class="Btn Btn--ghost"
+                    onclick="discardChanges()"
+                >
+                    Discard
+                </button>
+
+
+                <button
+                    type="button"
+                    class="Btn Btn--primary"
+                    onclick="saveChanges()"
+                >
+                    Save changes
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ================================================= -->
+
+    <script>
+
+        let dirty = false;
+
+
+        /* ---------------------------------------------
+           Change settings category
+        --------------------------------------------- */
+
+        function showSection(sectionId, button) {
+
+            const sections =
+                document.querySelectorAll(".settings-section");
+
+            sections.forEach(function(section) {
+
+                section.style.display = "none";
+
+            });
+
+
+            document.getElementById(sectionId).style.display = "block";
+
+
+            const buttons =
+                document.querySelectorAll(".Settings-navItem");
+
+            buttons.forEach(function(btn) {
+
+                btn.classList.remove("is-active");
+
+            });
+
+
+            button.classList.add("is-active");
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Toggle switch
+        --------------------------------------------- */
+
+        function toggleSwitch(element) {
+
+            element.classList.toggle("is-on");
+
+            markDirty();
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Mark settings as changed
+        --------------------------------------------- */
+
+        function markDirty() {
+
+            dirty = true;
+
+            document.getElementById("saveBar").style.display = "flex";
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Add collaborator
+        --------------------------------------------- */
+
+        function addCollaborator() {
+
+            const input =
+                document.getElementById("collaboratorEmail");
+
+            const email =
+                input.value.trim();
+
+
+            if (!email) {
+
+                return;
+
+            }
+
+
+            const list =
+                document.getElementById("collaboratorList");
+
+
+            const li =
+                document.createElement("li");
+
+
+            const emailSpan =
+                document.createElement("span");
+
+            emailSpan.textContent = email;
+
+
+            const removeButton =
+                document.createElement("button");
+
+            removeButton.type = "button";
+
+            removeButton.className =
+                "CollabList-remove";
+
+            removeButton.setAttribute(
+                "aria-label",
+                "Remove " + email
+            );
+
+            removeButton.textContent = "✕";
+
+
+            removeButton.onclick = function() {
+
+                li.remove();
+
+                markDirty();
+
+            };
+
+
+            li.appendChild(emailSpan);
+
+            li.appendChild(removeButton);
+
+            list.appendChild(li);
+
+
+            input.value = "";
+
+            markDirty();
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Press Enter to add collaborator
+        --------------------------------------------- */
+
+        function handleInviteKey(event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                addCollaborator();
+
+            }
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Save changes
+        --------------------------------------------- */
+
+        function saveChanges() {
+
+            /*
+             * For now this only hides the save bar.
+             *
+             * Later we can send these settings
+             * to Django using fetch().
+             */
+
+            dirty = false;
+
+            document.getElementById("saveBar").style.display = "none";
+
+            alert("Settings saved successfully.");
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Discard changes
+        --------------------------------------------- */
+
+        function discardChanges() {
+
+            /*
+             * This currently only hides the save bar.
+             *
+             * Later we can reload the saved settings
+             * from Django.
+             */
+
+            dirty = false;
+
+            document.getElementById("saveBar").style.display = "none";
+
+        }
+
+    </script>
+
+</body>
+</html>

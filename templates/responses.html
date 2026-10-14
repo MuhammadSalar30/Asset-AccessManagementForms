@@ -1,0 +1,545 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ form.title }} — Responses</title>
+    <link rel="stylesheet" href="{% static 'Navbar.css' %}">
+
+    <style>
+
+        :root {
+            --purple: #673ab7;
+            --purple-light: #f3e8fd;
+            --border: #dadce0;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f8f9fa;
+            color: var(--text-dark);
+        }
+
+        .responses-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 16px 60px;
+        }
+
+        .responses-header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 0 0 4px;
+        }
+
+        .responses-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin: 0 0 20px;
+        }
+
+        /* ---------- Tabs ---------- */
+
+        .tabs-row {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--purple);
+            border-bottom-color: var(--purple);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ---------- Summary count banner ---------- */
+
+        .summary-banner {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+
+        .summary-count {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--purple);
+        }
+
+        .summary-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* ---------- Per-question summary card ---------- */
+
+        .question-summary-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+        }
+
+        .question-summary-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin: 0 0 14px;
+        }
+
+        .answer-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .answer-bar-label {
+            width: 140px;
+            flex-shrink: 0;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .answer-bar-track {
+            flex: 1;
+            background: var(--purple-light);
+            border-radius: 4px;
+            height: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .answer-bar-fill {
+            background: var(--purple);
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .answer-bar-count {
+            width: 50px;
+            text-align: right;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .text-answer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .text-answer-item {
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        /* ---------- Individual responses list ---------- */
+
+        .response-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .response-nav button {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .response-nav button:hover {
+            background: #f1f3f4;
+        }
+
+        .response-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .response-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .response-answer-block {
+            margin-bottom: 18px;
+        }
+
+        .response-question-text {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0 0 6px;
+        }
+
+        .response-answer-text {
+            font-size: 14px;
+            color: var(--text-dark);
+            padding: 8px 0;
+        }
+
+        .no-answer {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ---------- Empty state ---------- */
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .question-summary-meta { font-size: 12px; color: var(--text-muted); margin: -8px 0 14px; }
+        .answer-bar-count { width: 90px; }
+        .scale-average { margin: 10px 0 0; font-size: 13px; color: var(--text-muted); }
+        .grid-summary-wrap { overflow-x: auto; }
+        .grid-summary-table { border-collapse: collapse; width: 100%; }
+        .grid-summary-table th, .grid-summary-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .grid-summary-table .grid-row-label { text-align: left; font-weight: 500; }
+        .answer-list { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.6; }
+        .file-chip { display: inline-block; margin: 0 8px 6px 0; padding: 6px 12px; background: var(--purple-light); color: var(--purple); border-radius: 16px; font-size: 13px; text-decoration: none; }
+        .individual-response-card[data-hidden="true"] { display: none; }
+    </style>
+</head>
+<body>
+
+{% include "navbar.html" %}
+
+<!--<div class="responses-wrapper">
+
+    <div class="responses-header">
+        <h1>{{ form.title }}</h1>
+        <p>{{ response_count }} response{{ response_count|pluralize }}</p>
+    </div>
+
+    <div class="tabs-row">
+        <button type="button" class="tab-btn active" onclick="switchTab('summary', this)">Summary</button>
+        <button type="button" class="tab-btn" onclick="switchTab('individual', this)">Individual</button>
+    </div>
+
+    {% if response_count == 0 %}
+
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No responses yet. Once people submit this form, answers will show up here.</p>
+        </div>
+
+    {% else %}
+
+      
+
+        <div id="summary-tab" class="tab-panel active">
+
+            <div class="summary-banner">
+                <span class="summary-count">{{ response_count }}</span>
+                <span class="summary-label">response{{ response_count|pluralize }}</span>
+            </div>
+
+            {% for element in elements %}
+                <div class="question-summary-card">
+                    <p class="question-summary-title">{{ element.question_text }}</p>
+
+                    {% if element.question_type == "mcq" or element.question_type == "checkbox" or element.question_type == "dropdown" %}
+               
+                        {% for option in element.options.all %}
+                            <div class="answer-bar-row">
+                                <span class="answer-bar-label">{{ option.option_text }}</span>
+                                <div class="answer-bar-track">
+                                    <div class="answer-bar-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="answer-bar-count">0</span>
+                            </div>
+                        {% endfor %}
+
+                    {% else %}
+                        <div class="text-answer-list">
+                           
+                            <p class="no-answer">No responses yet for this question.</p>
+                        </div>
+                    {% endif %}
+
+                </div>
+            {% endfor %}
+
+        </div>
+
+    
+
+        <div id="individual-tab" class="tab-panel">
+
+            <div class="response-nav">
+                <button type="button" onclick="prevResponse()">‹</button>
+                <span id="responseIndexLabel">1 of {{ response_count }}</span>
+                <button type="button" onclick="nextResponse()">›</button>
+            </div>
+
+            {% for response in responses %}
+                <div class="response-card individual-response-card" data-index="{{ forloop.counter0 }}" >
+
+                    <div class="response-meta">
+                        Submitted {{ response.submitted_at }}
+                        {% if response.respondent %} by {{ response.respondent.name }}{% endif %}
+                    </div>
+
+                    {% for element in elements %}
+                        <div class="response-answer-block">
+                            <p class="response-question-text">{{ element.question_text }}</p>
+                            <p class="response-answer-text no-answer">No answer submitted.</p>
+                        </div>
+                    {% endfor %}
+
+                </div>
+            {% endfor %}
+
+        </div>
+
+    {% endif %} 
+
+</div>   -->
+<div class="responses-wrapper">
+
+    <div class="responses-header">
+        <h1>{{ form.title }}</h1>
+        <p>{{ response_count }} response{{ response_count|pluralize }}</p>
+    </div>
+
+    <div class="tabs-row">
+        <button type="button" class="tab-btn active" onclick="switchTab('summary', this)">Summary</button>
+        <button type="button" class="tab-btn" onclick="switchTab('individual', this)">Individual</button>
+    </div>
+
+    {% if response_count == 0 %}
+
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No responses yet. Once people submit this form, answers will show up here.</p>
+        </div>
+
+    {% else %}
+
+        <!-- ============ SUMMARY ============ -->
+        <div id="summary-tab" class="tab-panel active">
+
+            <div class="summary-banner">
+                <span class="summary-count">{{ response_count }}</span>
+                <span class="summary-label">response{{ response_count|pluralize }}</span>
+            </div>
+
+            {% for s in summaries %}
+                <div class="question-summary-card">
+                    <p class="question-summary-title">{{ s.element.question_text }}</p>
+                    <p class="question-summary-meta">{{ s.answered }} answer{{ s.answered|pluralize }}</p>
+
+                    {% if s.kind == "choice" %}
+                        {% for row in s.rows %}
+                            <div class="answer-bar-row">
+                                <span class="answer-bar-label" title="{{ row.label }}">{{ row.label }}</span>
+                                <div class="answer-bar-track">
+                                    <div class="answer-bar-fill" data-percent=" {{ row.percent }}"></div>
+                                </div>
+                                <span class="answer-bar-count">{{ row.count }} ({{ row.percent }}%)</span>
+                            </div>
+                        {% endfor %}
+                        {% if s.average is not None %}
+                            <p class="scale-average">Average: {{ s.average }}</p>
+                        {% endif %}
+
+                    {% elif s.kind == "grid" %}
+                        <div class="grid-summary-wrap">
+                            <table class="grid-summary-table">
+                                <tr>
+                                    <th></th>
+                                    {% for c in s.columns %}<th>{{ c }}</th>{% endfor %}
+                                </tr>
+                                {% for r in s.table %}
+                                    <tr>
+                                        <td class="grid-row-label">{{ r.row }}</td>
+                                        {% for n in r.cells %}<td>{{ n }}</td>{% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+
+                    {% elif s.kind == "file" %}
+                        <div>
+                            {% for a in s.answers %}
+                                {% for f in a.files.all %}
+                                    <a class="file-chip" href="{{ f.file.url }}" target="_blank">{{ f.filename }}</a>
+                                {% endfor %}
+                            {% empty %}
+                                <p class="no-answer">No files uploaded.</p>
+                            {% endfor %}
+                        </div>
+
+                    {% else %}
+                        <div class="text-answer-list">
+                            {% for a in s.answers %}
+                                <div class="text-answer-item">{{ a.value }}</div>
+                            {% empty %}
+                                <p class="no-answer">No answers yet.</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <!-- ============ INDIVIDUAL ============ -->
+        <div id="individual-tab" class="tab-panel">
+
+            <div class="response-nav">
+                <button type="button" onclick="prevResponse()">‹</button>
+                <span id="responseIndexLabel">1 of {{ response_count }}</span>
+                <button type="button" onclick="nextResponse()">›</button>
+            </div>
+
+            {% for response in responses %}
+                <div class="response-card individual-response-card" data-index="{{ forloop.counter0 }}"
+                     {% if not forloop.first %}data-hidden="true"{% endif %}></div>>
+
+                    <div class="response-meta">
+                        Submitted {{ response.submitted_at|date:"M d, Y H:i" }}
+                        {% if response.respondent %} by {{ response.respondent.name }}{% endif %}
+                    </div>
+
+                    {% for row in response.rows %}
+                        <div class="response-answer-block">
+                            <p class="response-question-text">{{ row.element.question_text }}</p>
+
+                            {% if not row.answer %}
+                                <p class="response-answer-text no-answer">No answer.</p>
+
+                            {% elif row.element.question_type == "checkbox" %}
+                                <ul class="answer-list">
+                                    {% for v in row.answer.value %}<li>{{ v }}</li>{% endfor %}
+                                </ul>
+
+                            {% elif row.element.question_type == "mcq_grid" or row.element.question_type == "checkbox_grid" %}
+                                <ul class="answer-list">
+                                    {% for r, v in row.answer.grid_pairs %}
+                                        <li><strong>{{ r }}:</strong>
+                                            {% if row.element.question_type == "checkbox_grid" %}{{ v|join:", " }}{% else %}{{ v }}{% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+
+                            {% elif row.element.question_type == "file_upload" %}
+                                {% for f in row.answer.files.all %}
+                                    <a class="file-chip" href="{{ f.file.url }}" target="_blank">{{ f.filename }}</a>
+                                {% endfor %}
+
+                            {% else %}
+                                <p class="response-answer-text">{{ row.answer.answer_text }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                </div>
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+<script>
+
+function switchTab(tabName, btn) {
+
+    document.querySelectorAll(".tab-panel").forEach(function(el) { el.classList.remove("active"); });
+    document.querySelectorAll(".tab-btn").forEach(function(el) { el.classList.remove("active"); });
+
+    document.getElementById(tabName + "-tab").classList.add("active");
+    btn.classList.add("active");
+
+}
+
+let currentResponseIndex = 0;
+const totalResponses ={{ response_count }};
+
+function showResponse(index) {
+
+    document.querySelectorAll(".individual-response-card").forEach(function(card) {
+        card.style.display = "none";
+    });
+
+    const target = document.querySelector(`.individual-response-card[data-index="${index}"]`);
+    if (target) target.style.display = "block";
+
+    document.getElementById("responseIndexLabel").textContent = (index + 1) + " of " + totalResponses;
+
+}
+
+function nextResponse() {
+    if (currentResponseIndex < totalResponses - 1) {
+        currentResponseIndex++;
+        showResponse(currentResponseIndex);
+    }
+}
+
+function prevResponse() {
+    if (currentResponseIndex > 0) {
+        currentResponseIndex--;
+        showResponse(currentResponseIndex);
+    }
+}
+document.querySelectorAll(".answer-bar-fill").forEach(function(el) {
+    el.style.width = el.dataset.percent + "%";
+});
+
+</script>
+
+</body>
+</html>
