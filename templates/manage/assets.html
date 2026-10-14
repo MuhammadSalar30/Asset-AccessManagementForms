@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+{% block title %}User Assets{% endblock %}
+{% block content %}
+<h1>User Assets</h1>
+<p class="adm-sub">Fill in asset information for users. They then only enter their employee code after logging in.</p>
+
+{% if not asset_form %}
+<div class="warn">The Assets &amp; Access form isn't set up yet. <a href="{% url 'manage_system_forms' %}">Open System Forms</a></div>
+{% endif %}
+
+<div class="card">
+    <form class="filters" method="get">
+        <input name="q" value="{{ q }}" placeholder="Name, email or employee code">
+        <select name="department">
+            <option value="">All departments</option>
+            {% for d in departments %}
+            <option value="{{ d.pk }}" {% if f_dept == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+            {% endfor %}
+        </select>
+        <label style="display:flex; align-items:center; gap:6px; font-size:14px;">
+            <input type="checkbox" name="missing" value="1" {% if only_missing %}checked{% endif %}> Without a record
+        </label>
+        <button type="submit">Filter</button>
+        <a class="btn" style="background:#fff;color:#673ab7;border:1px solid #673ab7;padding:7px 10px;" href="{% url 'manage_assets' %}">Clear</a>
+    </form>
+
+    <div class="table-wrap">
+    <table>
+        <tr><th>Name</th><th>Code</th><th>Department</th><th>Asset record</th><th></th></tr>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.user.name }}</td>
+            <td>{{ row.user.employee_code|default:"—" }}</td>
+            <td>{{ row.user.department.name|default:"—" }}</td>
+            <td>
+                {% if row.rec %}
+                    {{ row.rec.submitted_at|date:"M d, Y" }} <span class="badge">{{ row.rec.get_status_display }}</span>
+                {% else %}
+                    <span class="muted">No record</span>
+                {% endif %}
+            </td>
+            <td><a class="btn" style="padding:6px 12px;" href="{% url 'manage_asset_fill' row.user.user_id %}">{% if row.rec %}Update{% else %}Fill{% endif %}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted">No users match.</td></tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+{% endblock %}

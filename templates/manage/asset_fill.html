@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block title %}Asset information{% endblock %}
+{% block content %}
+<p><a href="{% url 'manage_assets' %}">&larr; Back to user assets</a></p>
+<h1>Asset information: {{ target.name }}</h1>
+<p class="adm-sub">{{ target.department.name|default:"No department" }} &middot; {{ target.email }}. Only the employee code is required.</p>
+
+{% if errors %}<div class="warn">Please correct the highlighted fields.</div>{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card">
+    {% for f in fields %}
+        {% if f.kind == "section" %}
+            <h2 style="margin:24px 0 8px; color:#673ab7; border-bottom:1px solid #dadce0; padding-bottom:4px;">{{ f.title }}</h2>
+            {% if f.description %}<p class="muted" style="font-size:13px; margin-top:0;">{{ f.description }}</p>{% endif %}
+        {% elif f.kind == "text" %}
+            {% if f.title %}<p class="muted" style="font-size:13px;"><strong>{{ f.title }}</strong> {{ f.description }}</p>{% endif %}
+        {% else %}
+            <div style="margin-bottom:14px;">
+                <label class="muted" style="display:block; font-size:13px; margin-bottom:4px;">
+                    {{ f.el.question_text }}{% if f.is_code %} <strong style="color:#d93025;">*</strong>{% endif %}
+                    {% if f.error %}<span style="color:#d93025;"> &mdash; {{ f.error }}</span>{% endif %}
+                </label>
+
+                {% if f.type == "short" %}
+                    <input type="text" name="{{ f.name }}" value="{{ f.text }}" style="width:100%; max-width:480px;">
+                {% elif f.type == "paragraph" %}
+                    <textarea name="{{ f.name }}" rows="3" style="width:100%; max-width:480px; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;">{{ f.text }}</textarea>
+                {% elif f.type == "date" %}
+                    <input type="date" name="{{ f.name }}" value="{{ f.text }}">
+                {% elif f.type == "time" %}
+                    <input type="time" name="{{ f.name }}" value="{{ f.text }}">
+                {% elif f.type == "dropdown" %}
+                    <select name="{{ f.name }}">
+                        <option value="">—</option>
+                        {% for o in f.options %}<option value="{{ o.text }}" {% if o.checked %}selected{% endif %}>{{ o.text }}</option>{% endfor %}
+                    </select>
+                {% elif f.type == "mcq" or f.type == "linear_scale" %}
+                    {% for o in f.options %}
+                    <label style="margin-right:16px;"><input type="radio" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
+                    {% endfor %}
+                {% elif f.type == "checkbox" %}
+                    {% for o in f.options %}
+                    <label style="margin-right:16px;"><input type="checkbox" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
+                    {% endfor %}
+                {% elif f.type == "mcq_grid" or f.type == "checkbox_grid" %}
+                    <div class="table-wrap">
+                    <table style="width:auto;">
+                        <tr><th></th>{% for c in f.cols %}<th>{{ c }}</th>{% endfor %}</tr>
+                        {% for row in f.rows %}
+                        <tr>
+                            <td>{{ row.label }}</td>
+                            {% for cell in row.cells %}
+                            <td style="text-align:center;"><input type="{% if f.type == 'checkbox_grid' %}checkbox{% else %}radio{% endif %}" name="{{ f.name }}__{{ row.i }}" value="{{ cell.col }}" {% if cell.checked %}checked{% endif %}></td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    </div>
+                {% else %}
+                    <span class="muted">This question type can't be filled in here.</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+    </div>
+    <button type="submit">Save asset information</button>
+</form>
+{% endblock %}

@@ -13,7 +13,7 @@
     <h2>Add folders</h2>
     <form method="post" action="{% url 'add_folders' %}">
         {% csrf_token %}
-        <textarea name="paths" rows="4" required placeholder="One folder path per line, e.g.&#10;IT\Employee\Afzal Hussain&#10;Finance\Reports"
+        <textarea name="paths" rows="4" required placeholder=""
                   style="width:100%; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;"></textarea>
         <p style="margin:10px 0 0;"><button type="submit">Add</button></p>
     </form>

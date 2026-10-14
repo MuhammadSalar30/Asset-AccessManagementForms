@@ -48,7 +48,8 @@ urlpatterns=[
     path("manage/users/<uuid:user_id>/delete/", views.delete_user, name="delete_user"),
     path("responses/", views.responses_list, name="responses_list"),
     path("responses/<uuid:response_id>/", views.response_detail, name="response_detail"),
-  
+    path("manage/assets/", views.manage_assets, name="manage_assets"),
+    path("manage/assets/<uuid:user_id>/", views.manage_asset_fill, name="manage_asset_fill"),
 
     
 

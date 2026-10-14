@@ -223,6 +223,9 @@ class Response(models.Model):
         ("pending_hod", "Pending HOD approval"),
         ("rejected_hod", "Rejected by HOD"),
         ("pending_it", "Approved by HOD - pending IT Manager"),
+        ("approved_it", "Approved by IT Manager"),
+        ("rejected_it", "Rejected by IT Manager"),
+        ("recorded", "Recorded by admin"),
     ]
     department = models.ForeignKey(
         Department, null=True, blank=True,
@@ -253,7 +256,8 @@ class Response(models.Model):
     submitted_at = models.DateTimeField(
         auto_now_add=True
     )
-
+    entered_by = models.ForeignKey(User, null=True, blank=True,
+                                   on_delete=models.SET_NULL, related_name="+")
     def __str__(self):
         return f"Response to {self.form.title}"
 

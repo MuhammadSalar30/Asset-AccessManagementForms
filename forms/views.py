@@ -20,6 +20,7 @@ from .decorators import hod_required
 from .models import ApprovalLog, AccessGrant
 import json
 import os
+from datetime import datetime, timedelta, time as dtime
 from collections import Counter, defaultdict
 from django.utils.dateparse import parse_date, parse_time
 from .models import Response as FormResponse, Answer, AnswerFile
@@ -1070,11 +1071,24 @@ def notify_hod_new_request(response):
         print(f"HOD notification failed: {e}")
 
 
+#def notify_requester_decision(response, decision, comment):
+  #  grants = list(response.grants.all())
+  #  if grants and decision == "approved":
+  #      body += "\n\nFolder access set by your HOD:\n" + "\n".join(
+  #          f"- {g.folder_path}: {g.get_level_display()}" for g in grants)
+  #  user = response.respondent
+  #  if not user or not user.email:
+  #      return
+  #  verdict = ("approved by your HOD and sent to the IT Manager" if decision == "approved"
+   #            else "rejected by your HOD")
+   # body = f'Your request "{response.form.title}" was {verdict}.'
+    #   if comment:
+#        body += f"\n\nComment: {comment}"
+#    try:
+#        send_mail(f"Request update: {response.form.title}", body, None, [user.email], fail_silently=False)
+#    except Exception as e:
+ #       print(f"Requester notification failed: {e}")
 def notify_requester_decision(response, decision, comment):
-    grants = list(response.grants.all())
-    if grants and decision == "approved":
-        body += "\n\nFolder access set by your HOD:\n" + "\n".join(
-            f"- {g.folder_path}: {g.get_level_display()}" for g in grants)
     user = response.respondent
     if not user or not user.email:
         return
@@ -1083,11 +1097,14 @@ def notify_requester_decision(response, decision, comment):
     body = f'Your request "{response.form.title}" was {verdict}.'
     if comment:
         body += f"\n\nComment: {comment}"
+    grants = list(response.grants.all())
+    if grants and decision == "approved":
+        body += "\n\nFolder access set by your HOD:\n" + "\n".join(
+            f"- {g.folder_path}: {g.get_level_display()}" for g in grants)
     try:
         send_mail(f"Request update: {response.form.title}", body, None, [user.email], fail_silently=False)
     except Exception as e:
         print(f"Requester notification failed: {e}")
-
 
 @hod_required
 def hod_approvals(request):
@@ -1187,7 +1204,7 @@ def hod_decide(request, response_id):
                                decision=decision, comment=comment)
     for path, level in levels:
         AccessGrant.objects.create(response=resp, folder_path=path[:500], level=level, set_by=me)
-    transaction.on_commit(lambda: notify_requester_decision(resp, decision, comment))
+    transaction.on_commit(lambda: notify_requester_decision(resp, decision, comment),robust=True)
 
     messages.success(request, f"Request {decision}.")
     return redirect("hod_approvals")
@@ -1559,11 +1576,17 @@ def responses_list(request):
             pass
     if dept_id.isdigit() and request.org_user.is_admin:
         qs = qs.filter(department_id=int(dept_id))
-    if _safe_date(date_from):
-        qs = qs.filter(submitted_at__date__gte=_safe_date(date_from))
-    if _safe_date(date_to):
-        qs = qs.filter(submitted_at__date__lte=_safe_date(date_to))
-
+    #if _safe_date(date_from):
+        #qs = qs.filter(submitted_at__date__gte=_safe_date(date_from))
+    #if _safe_date(date_to):
+        #qs = qs.filter(submitted_at__date__lte=_safe_date(date_to))
+    
+    d_from = _safe_date(date_from)
+    if d_from:
+        qs = qs.filter(submitted_at__gte=timezone.make_aware(datetime.combine(d_from, dtime.min)))
+    d_to = _safe_date(date_to)
+    if d_to:
+        qs = qs.filter(submitted_at__lt=timezone.make_aware(datetime.combine(d_to + timedelta(days=1), dtime.min)))
     total = qs.count()
     return render(request, "responses/list.html", {
         "responses": qs[:200],
@@ -1590,3 +1613,152 @@ def response_detail(request, response_id):
     })
     return render(request, "responses/detail.html", ctx)
 
+def _current_record(user, form):
+    """The user's current asset record: the newest recorded/approved one, else the newest of any."""
+    qs = FormResponse.objects.filter(form=form, respondent=user)
+    return (qs.filter(status__in=["recorded", "approved_it"]).order_by("-submitted_at").first()
+            or qs.order_by("-submitted_at").first())
+def _values_from_answer(el, answer):
+    if answer is None:
+        return "", [], {}
+    v = answer.value
+    if el.question_type == "checkbox":
+        return "", (v if isinstance(v, list) else []), {}
+    if el.question_type in ("mcq_grid", "checkbox_grid"):
+        return "", [], (v if isinstance(v, dict) else {})
+    return answer.answer_text, [], {}
+
+
+
+def _values_from_post(el, post):
+    name = f"answer_{el.pk}"
+    if el.question_type in ("mcq_grid", "checkbox_grid"):
+        grid = {}
+        for i, row in enumerate(el.grid_row_list):
+            sel = post.getlist(f"{name}__{i}")
+            if sel:
+                grid[row] = sel if el.question_type == "checkbox_grid" else sel[0]
+        return "", [], grid
+    if el.question_type == "checkbox":
+        return "", post.getlist(name), {}
+    return post.get(name, ""), [], {}
+
+
+def _build_fields(form, getter, defaults, errors):
+    fields = []
+    for el in form.elements.all():
+        if el.element_type in ("sec", "text"):
+            fields.append({"kind": "section" if el.element_type == "sec" else "text",
+                           "title": el.title, "description": el.description})
+            continue
+        if el.element_type != "question":
+            continue
+        text, picked, grid = getter(el)
+        if not text and not picked and not grid:
+            text = defaults.get(el.question_text.strip(), "")
+        qtype = el.question_type
+        options = [o.option_text for o in el.options.all()]
+        if qtype == "linear_scale":
+            options = [str(n) for n in el.scale_range]
+        rows = []
+        if qtype in ("mcq_grid", "checkbox_grid"):
+            for i, label in enumerate(el.grid_row_list):
+                sel = grid.get(label)
+                sel_list = sel if isinstance(sel, list) else ([sel] if sel else [])
+                rows.append({"i": i, "label": label,
+                             "cells": [{"col": c, "checked": c in sel_list} for c in options]})
+        fields.append({
+            "kind": "q", "el": el, "name": f"answer_{el.pk}", "type": qtype, "text": text,
+            "options": [{"text": o, "checked": (o in picked) or (o == text)} for o in options],
+            "rows": rows, "cols": options,
+            "is_code": el.pk == form.code_element_id,
+            "error": errors.get(str(el.pk), ""),
+        })
+    return fields
+
+
+@admin_required
+def manage_assets(request):
+    form = Form.objects.filter(purpose="asset_access").first()
+    q = request.GET.get("q", "").strip()
+    dept = request.GET.get("department", "")
+    only_missing = request.GET.get("missing") == "1"
+
+    users = User.objects.select_related("department").order_by("name")
+    if q:
+        users = users.filter(Q(name__icontains=q) | Q(email__icontains=q) | Q(employee_code__icontains=q))
+    if _int_or_none(dept):
+        users = users.filter(department_id=int(dept))
+
+    latest = {}
+    if form:
+        for r in FormResponse.objects.filter(form=form, respondent__in=users).order_by("submitted_at"):
+            latest[r.respondent_id] = r                      # the newest one wins
+    rows = [{"user": u, "rec": latest.get(u.pk)} for u in users]
+    if only_missing:
+        rows = [r for r in rows if r["rec"] is None]
+
+    return render(request, "manage/assets.html", {
+        "rows": rows, "asset_form": form, "q": q, "f_dept": dept, "only_missing": only_missing,
+        "departments": Department.objects.order_by("name"),
+    })
+
+
+@admin_required
+def manage_asset_fill(request, user_id):
+    target = get_object_or_404(User.objects.select_related("department"), pk=user_id)
+    form = Form.objects.filter(purpose="asset_access").first()
+    if form is None or not form.code_element_id:
+        messages.error(request, "Set the Assets & Access form and its employee-code question under System Forms first.")
+        return redirect("manage_system_forms")
+
+    defaults = {
+        "Employee Code": target.employee_code or "",
+        "Name": target.name,
+        "Department": target.department.name if target.department else "",
+        "Email ID": target.email,
+        "Date": timezone.localdate().isoformat(),
+    }
+    errors = {}
+
+    if request.method == "POST":
+        collected = []
+        for el in form.elements.all():
+            if el.element_type != "question":
+                continue
+            stored, uploads, error = validate_answer(el, request.POST, request.FILES)
+            # admins may leave anything blank except the employee code
+            if error and not (error == "This question is required." and el.pk != form.code_element_id):
+                errors[str(el.pk)] = error
+            elif stored:
+                collected.append((el, stored))
+
+        new_code = next((s.strip() for el, s in collected if el.pk == form.code_element_id), "")
+        if not new_code:
+            errors[str(form.code_element_id)] = "The employee code is required."
+        elif User.objects.filter(employee_code__iexact=new_code).exclude(pk=target.pk).exists():
+            errors[str(form.code_element_id)] = "This code already belongs to another user."
+
+        if not errors:
+            with transaction.atomic():
+                response = FormResponse.objects.create(
+                    form=form, respondent=target, department=target.department,
+                    status="recorded", entered_by=request.org_user)
+                for el, stored in collected:
+                    Answer.objects.create(response=response, element=el, answer_text=stored)
+                target.employee_code = new_code
+                target.save(update_fields=["employee_code"])
+            messages.success(request, f"Asset information saved for {target.name}. "
+                                      "They only need to enter their employee code after logging in.")
+            return redirect("manage_assets")
+
+        getter = lambda el: _values_from_post(el, request.POST)
+    else:
+        record = _current_record(target, form)
+        answers = ({a.element_id: a for a in record.answers.select_related("element")} if record else {})
+        getter = lambda el: _values_from_answer(el, answers.get(el.pk))
+
+    return render(request, "manage/asset_fill.html", {
+        "target": target, "form": form, "errors": errors,
+        "fields": _build_fields(form, getter, defaults, errors),
+    })
