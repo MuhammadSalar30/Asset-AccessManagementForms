@@ -1,0 +1,80 @@
+{% extends "layout.html" %}
+{% block title %}Admin approval{% endblock %}
+{% block content %}
+<p><a href="{% url 'provision_queue' %}">&larr; Back to requests</a></p>
+<h1>{{ resp.form.title }}</h1>
+<p class="adm-sub">
+    {{ resp.respondent.name|default:"(deleted user)" }}
+    {% if resp.respondent.employee_code %}&middot; Code {{ resp.respondent.employee_code }}{% endif %}
+    &middot; {{ resp.department.name|default:"—" }}
+    &middot; {{ resp.submitted_at|date:"M d, Y H:i" }}
+    &middot; <span class="badge">{{ resp.get_status_display }}</span>
+</p>
+
+<div class="card">
+    {% for it in items %}
+        {% if it.kind == "section" %}
+            <div style="font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:#673ab7; border-bottom:1px solid #dadce0; padding-bottom:4px; margin:22px 0 10px;">{{ it.title }}</div>
+        {% else %}
+            <div style="display:grid; grid-template-columns:220px 1fr; gap:12px; padding:5px 0; font-size:14px;">
+                <div class="muted">{{ it.element.question_text }}</div>
+                <div>
+                {% with qt=it.element.question_type a=it.answer %}
+                    {% if qt == "checkbox" %}
+                        {{ a.value|join:", " }}
+                    {% elif qt == "mcq_grid" or qt == "checkbox_grid" %}
+                        {% for label, picked in a.grid_pairs %}
+                            <div>{{ label }}: {% if qt == "checkbox_grid" %}{{ picked|join:", " }}{% else %}{{ picked }}{% endif %}</div>
+                        {% endfor %}
+                    {% elif qt == "file_upload" %}
+                        {% for f in a.files.all %}<div><a href="{{ f.file.url }}" target="_blank">{{ f.filename }}</a></div>{% endfor %}
+                    {% else %}
+                        {{ a.answer_text|linebreaksbr }}
+                    {% endif %}
+                {% endwith %}
+                </div>
+            </div>
+        {% endif %}
+    {% empty %}
+        <p class="muted">No answers were recorded.</p>
+    {% endfor %}
+</div>
+
+{% if grants %}
+<div class="card">
+    <h2>Folder access set by HOD</h2>
+    {% for g in grants %}
+    <div style="margin-bottom:6px;">{{ g.folder_path }} &mdash; <strong>{{ g.get_level_display }}</strong></div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if can_decide %}
+<div class="card">
+    <h2>Your decision</h2>
+    <form method="post" action="{% url 'provision_decide' resp.response_id %}">
+        {% csrf_token %}
+        <textarea name="comment" rows="3" style="width:100%; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;"
+                  placeholder="Comment (required if you reject)"></textarea>
+        <p style="margin:12px 0 0;">
+            <button type="submit" name="decision" value="approved">Approve</button>
+            <button type="submit" name="decision" value="rejected" class="danger">Reject</button>
+        </p>
+    </form>
+</div>
+{% elif resp.status == "pending_it" %}
+<div class="warn">This is your own request, so another admin has to approve it.</div>
+{% endif %}
+
+{% if logs %}
+<div class="card">
+    <h2>Approval history</h2>
+    {% for l in logs %}
+    <div style="margin-bottom:6px;">
+        {{ l.get_stage_display }} {{ l.get_decision_display|lower }} by {{ l.approver.name|default:"—" }}
+        on {{ l.decided_at|date:"M d, Y H:i" }}{% if l.comment %} &mdash; {{ l.comment }}{% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

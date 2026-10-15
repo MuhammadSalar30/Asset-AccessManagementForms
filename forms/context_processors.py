@@ -11,4 +11,6 @@ def sidebar_flags(request):
     if is_hod:
         pending = (Response.objects.filter(department__hod=user, status="pending_hod")
                    .exclude(respondent=user).count())
-    return {"is_hod": is_hod, "pending_approvals": pending}
+    pending_admin = (Response.objects.filter(status="pending_it").exclude(respondent=user).count()
+                     if user.is_admin else 0)
+    return {"is_hod": is_hod, "pending_approvals": pending, "pending_admin_count": pending_admin}

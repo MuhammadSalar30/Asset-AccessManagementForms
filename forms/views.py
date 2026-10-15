@@ -926,6 +926,7 @@ def manage_org(request):
         "no_hod": Department.objects.filter(hod__isnull=True).count(),
         "departments": departments,
         "recent_forms": Form.objects.select_related("owner").order_by("-created_at")[:6],
+        "pending_provision": FormResponse.objects.filter(status="pending_it").exclude(respondent=request.org_user).count(),
     })
 
 
@@ -1092,15 +1093,11 @@ def notify_requester_decision(response, decision, comment):
     user = response.respondent
     if not user or not user.email:
         return
-    verdict = ("approved by your HOD and sent to the IT Manager" if decision == "approved"
-               else "rejected by your HOD")
+    verdict = ("approved by your HOD. It now waits for the administrator's final OK"
+               if decision == "approved" else "rejected by your HOD")
     body = f'Your request "{response.form.title}" was {verdict}.'
     if comment:
         body += f"\n\nComment: {comment}"
-    grants = list(response.grants.all())
-    if grants and decision == "approved":
-        body += "\n\nFolder access set by your HOD:\n" + "\n".join(
-            f"- {g.folder_path}: {g.get_level_display()}" for g in grants)
     try:
         send_mail(f"Request update: {response.form.title}", body, None, [user.email], fail_silently=False)
     except Exception as e:
@@ -1113,7 +1110,8 @@ def hod_approvals(request):
             .select_related("form", "respondent", "department").order_by("-submitted_at"))
     return render(request, "approvals/list.html", {
         "pending": base.filter(status="pending_hod"),
-        "decided": base.exclude(status="pending_hod")[:50],
+        #"decided": base.exclude(status="pending_hod")[:50],
+        "decided": base.exclude(status__in=["pending_hod", "recorded"])[:50],
     })
 
 
@@ -1202,9 +1200,12 @@ def hod_decide(request, response_id):
     resp.save(update_fields=["status"])
     ApprovalLog.objects.create(response=resp, stage="hod", approver=me,
                                decision=decision, comment=comment)
+    transaction.on_commit(lambda: notify_admins_new_request(response), robust=True)
     for path, level in levels:
         AccessGrant.objects.create(response=resp, folder_path=path[:500], level=level, set_by=me)
     transaction.on_commit(lambda: notify_requester_decision(resp, decision, comment),robust=True)
+    if decision == "approved":
+        transaction.on_commit(lambda: notify_admins_new_request(resp), robust=True)
 
     messages.success(request, f"Request {decision}.")
     return redirect("hod_approvals")
@@ -1762,3 +1763,94 @@ def manage_asset_fill(request, user_id):
         "target": target, "form": form, "errors": errors,
         "fields": _build_fields(form, getter, defaults, errors),
     })
+def notify_admins_new_request(response):
+    recipients = list(User.objects.filter(role="admin").exclude(pk=response.respondent_id)
+                      .exclude(email="").values_list("email", flat=True))
+    if not recipients:
+        return
+    requester = response.respondent.name if response.respondent else "An employee"
+    dept = response.department.name if response.department else "-"
+    link = f"{settings.SITE_URL}/provision/{response.response_id}/"
+    body = (f'{requester} ({dept}) requested "{response.form.title}". The HOD has approved it '
+            f"and it now needs your OK.\n\nReview it here:\n{link}\n")
+    try:
+        send_mail(f"Approval needed: {response.form.title}", body, None, recipients, fail_silently=False)
+    except Exception as e:
+        print(f"Admin notification failed: {e}")
+
+
+def notify_requester_admin_decision(response, decision, comment):
+    user = response.respondent
+    if not user or not user.email:
+        return
+    verdict = "approved by the administrator" if decision == "approved" else "rejected by the administrator"
+    body = f'Your request "{response.form.title}" was {verdict}.'
+    if comment:
+        body += f"\n\nComment: {comment}"
+    grants = list(response.grants.all())
+    if grants and decision == "approved":
+        body += "\n\nFolder access:\n" + "\n".join(
+            f"- {g.folder_path}: {g.get_level_display()}" for g in grants)
+    try:
+        send_mail(f"Request update: {response.form.title}", body, None, [user.email], fail_silently=False)
+    except Exception as e:
+        print(f"Requester notification failed: {e}")
+
+
+@admin_required
+def provision_queue(request):
+    me = request.org_user
+    base = (FormResponse.objects.select_related("form", "respondent", "department")
+            .order_by("-submitted_at"))
+    return render(request, "manage/provision_list.html", {
+        "me": me,
+        "pending": base.filter(status="pending_it"),
+        "decided": base.filter(status__in=["approved_it", "rejected_it"])[:50],
+    })
+
+
+@admin_required
+def provision_detail(request, response_id):
+    me = request.org_user
+    resp = get_object_or_404(
+        FormResponse.objects.select_related("form", "respondent", "department"),
+        pk=response_id, status__in=["pending_it", "approved_it", "rejected_it"],
+    )
+    ctx = _profile_context(resp.respondent, resp.form, resp)
+    ctx.update({
+        "grants": resp.grants.select_related("set_by"),
+        "can_decide": resp.status == "pending_it" and resp.respondent_id != me.pk,
+    })
+    return render(request, "manage/provision_detail.html", ctx)
+
+
+@admin_required
+@require_POST
+@transaction.atomic
+def provision_decide(request, response_id):
+    me = request.org_user
+    resp = get_object_or_404(FormResponse.objects.select_related("form", "respondent", "department"),
+                             pk=response_id)
+    if resp.respondent_id == me.pk:
+        raise PermissionDenied   # nobody approves their own request
+
+    if resp.status != "pending_it":
+        messages.error(request, "This request isn't waiting for admin approval.")
+        return redirect("provision_queue")
+
+    decision = request.POST.get("decision")
+    comment = request.POST.get("comment", "").strip()
+    if decision not in ("approved", "rejected"):
+        return redirect("provision_detail", response_id=resp.response_id)
+    if decision == "rejected" and not comment:
+        messages.error(request, "Please give a reason when rejecting.")
+        return redirect("provision_detail", response_id=resp.response_id)
+
+    resp.status = "approved_it" if decision == "approved" else "rejected_it"
+    resp.save(update_fields=["status"])
+    ApprovalLog.objects.create(response=resp, stage="admin", approver=me,
+                               decision=decision, comment=comment)
+    transaction.on_commit(lambda: notify_requester_admin_decision(resp, decision, comment), robust=True)
+
+    messages.success(request, f"Request {decision}.")
+    return redirect("provision_queue")

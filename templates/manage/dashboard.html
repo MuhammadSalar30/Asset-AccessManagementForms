@@ -3,6 +3,10 @@
 {% block content %}
 <h1>Admin Dashboard</h1>
 <p class="adm-sub">Overview of your organization.</p>
+{% if pending_provision %}
+<div class="warn">{{ pending_provision }} request{{ pending_provision|pluralize }} approved by the HOD and waiting for your OK.
+    <a href="{% url 'provision_queue' %}">Review now</a></div>
+{% endif %}
 
 <div class="stat-grid">
     <div class="stat"><span>{{ total_users }}</span>Users</div>

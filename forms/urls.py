@@ -50,6 +50,9 @@ urlpatterns=[
     path("responses/<uuid:response_id>/", views.response_detail, name="response_detail"),
     path("manage/assets/", views.manage_assets, name="manage_assets"),
     path("manage/assets/<uuid:user_id>/", views.manage_asset_fill, name="manage_asset_fill"),
+    path("provision/", views.provision_queue, name="provision_queue"),
+    path("provision/<uuid:response_id>/", views.provision_detail, name="provision_detail"),
+    path("provision/<uuid:response_id>/decide/", views.provision_decide, name="provision_decide"),
 
     
 

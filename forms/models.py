@@ -222,9 +222,9 @@ class Response(models.Model):
     STATUS_CHOICES = [
         ("pending_hod", "Pending HOD approval"),
         ("rejected_hod", "Rejected by HOD"),
-        ("pending_it", "Approved by HOD - pending IT Manager"),
-        ("approved_it", "Approved by IT Manager"),
-        ("rejected_it", "Rejected by IT Manager"),
+        ("pending_it", "Approved by HOD - waiting for admin"),
+        ("approved_it", "Approved by admin"),
+        ("rejected_it", "Rejected by admin"),
         ("recorded", "Recorded by admin"),
     ]
     department = models.ForeignKey(
@@ -262,7 +262,7 @@ class Response(models.Model):
         return f"Response to {self.form.title}"
 
 class ApprovalLog(models.Model):
-    STAGE_CHOICES = [("hod", "HOD"), ("it", "IT Manager")]
+    STAGE_CHOICES = [("hod", "HOD"), ("admin", "Admin")]
     DECISION_CHOICES = [("approved", "Approved"), ("rejected", "Rejected")]
 
     response = models.ForeignKey(Response, on_delete=models.CASCADE, related_name="approval_logs")
