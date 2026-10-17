@@ -1,70 +1,155 @@
-{% extends "layout.html" %}
-{% block title %}Asset information{% endblock %}
-{% block content %}
-<p><a href="{% url 'manage_assets' %}">&larr; Back to user assets</a></p>
-<h1>Asset information: {{ target.name }}</h1>
-<p class="adm-sub">{{ target.department.name|default:"No department" }} &middot; {{ target.email }}. Only the employee code is required.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Asset information - {{ target.name }}</title>
+    <style>
+        * { box-sizing:border-box; }
+        body { margin:0; background:#f0ebf8; font-family:'Segoe UI',Roboto,Arial,sans-serif; color:#202124; }
+        .gf-wrap { max-width:700px; margin:0 auto; padding:24px 12px 60px; }
 
-{% if errors %}<div class="warn">Please correct the highlighted fields.</div>{% endif %}
+        .gf-banner { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;
+                     background:#fff; border:1px solid #dadce0; border-radius:8px; padding:12px 18px; margin-bottom:14px; font-size:14px; }
+        .gf-banner a { color:#673ab7; text-decoration:none; font-weight:600; }
+        .gf-msg { background:#e8f0fe; border-radius:8px; padding:10px 16px; margin-bottom:12px; font-size:14px; }
+        .gf-msg.gf-error { background:#fce8e6; color:#d93025; }
 
-<form method="post">
-    {% csrf_token %}
-    <div class="card">
-    {% for f in fields %}
-        {% if f.kind == "section" %}
-            <h2 style="margin:24px 0 8px; color:#673ab7; border-bottom:1px solid #dadce0; padding-bottom:4px;">{{ f.title }}</h2>
-            {% if f.description %}<p class="muted" style="font-size:13px; margin-top:0;">{{ f.description }}</p>{% endif %}
-        {% elif f.kind == "text" %}
-            {% if f.title %}<p class="muted" style="font-size:13px;"><strong>{{ f.title }}</strong> {{ f.description }}</p>{% endif %}
-        {% else %}
-            <div style="margin-bottom:14px;">
-                <label class="muted" style="display:block; font-size:13px; margin-bottom:4px;">
-                    {{ f.el.question_text }}{% if f.is_code %} <strong style="color:#d93025;">*</strong>{% endif %}
-                    {% if f.error %}<span style="color:#d93025;"> &mdash; {{ f.error }}</span>{% endif %}
-                </label>
+        .gf-card { background:#fff; border:1px solid #dadce0; border-radius:8px; padding:24px 32px; margin-bottom:14px; }
+        .gf-card.has-error { border-color:#d93025; }
+        .gf-title { border-top:10px solid #673ab7; }
+        .gf-title h1 { margin:0 0 10px; font-size:28px; font-weight:600; }
+        .gf-title p { margin:0; color:#5f6368; font-size:14px; }
+        .gf-card h3 { margin:0 0 6px; font-size:17px; font-weight:600; }
+        .gf-card p.gf-desc { margin:0; color:#5f6368; font-size:14px; line-height:1.5; }
 
-                {% if f.type == "short" %}
-                    <input type="text" name="{{ f.name }}" value="{{ f.text }}" style="width:100%; max-width:480px;">
-                {% elif f.type == "paragraph" %}
-                    <textarea name="{{ f.name }}" rows="3" style="width:100%; max-width:480px; padding:8px; border:1px solid #dadce0; border-radius:6px; font-family:inherit;">{{ f.text }}</textarea>
-                {% elif f.type == "date" %}
-                    <input type="date" name="{{ f.name }}" value="{{ f.text }}">
-                {% elif f.type == "time" %}
-                    <input type="time" name="{{ f.name }}" value="{{ f.text }}">
-                {% elif f.type == "dropdown" %}
-                    <select name="{{ f.name }}">
-                        <option value="">—</option>
-                        {% for o in f.options %}<option value="{{ o.text }}" {% if o.checked %}selected{% endif %}>{{ o.text }}</option>{% endfor %}
-                    </select>
-                {% elif f.type == "mcq" or f.type == "linear_scale" %}
-                    {% for o in f.options %}
-                    <label style="margin-right:16px;"><input type="radio" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
-                    {% endfor %}
-                {% elif f.type == "checkbox" %}
-                    {% for o in f.options %}
-                    <label style="margin-right:16px;"><input type="checkbox" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
-                    {% endfor %}
-                {% elif f.type == "mcq_grid" or f.type == "checkbox_grid" %}
-                    <div class="table-wrap">
-                    <table style="width:auto;">
-                        <tr><th></th>{% for c in f.cols %}<th>{{ c }}</th>{% endfor %}</tr>
-                        {% for row in f.rows %}
-                        <tr>
-                            <td>{{ row.label }}</td>
-                            {% for cell in row.cells %}
-                            <td style="text-align:center;"><input type="{% if f.type == 'checkbox_grid' %}checkbox{% else %}radio{% endif %}" name="{{ f.name }}__{{ row.i }}" value="{{ cell.col }}" {% if cell.checked %}checked{% endif %}></td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </table>
-                    </div>
-                {% else %}
-                    <span class="muted">This question type can't be filled in here.</span>
-                {% endif %}
-            </div>
-        {% endif %}
-    {% endfor %}
+        .gf-section { background:#f3e5fb; border-left:4px solid #673ab7; border-radius:8px; padding:26px 32px; margin:22px 0 14px; }
+        .gf-section h2 { margin:0; font-size:20px; font-weight:600; color:#673ab7; }
+        .gf-section p { margin:8px 0 0; color:#5f6368; font-size:14px; line-height:1.5; }
+
+        .gf-q { display:block; font-size:16px; font-weight:600; margin-bottom:14px; }
+        .gf-req { color:#d93025; margin-left:4px; }
+        .gf-err { color:#d93025; font-size:13px; margin:-6px 0 10px; }
+
+        .gf-input { width:100%; border:none; border-bottom:1px solid #dadce0; padding:6px 0; font-size:14px;
+                    font-family:inherit; background:transparent; outline:none; border-radius:0; }
+        .gf-input:focus { border-bottom:2px solid #673ab7; }
+        textarea.gf-input { resize:vertical; min-height:60px; }
+        select.gf-input { padding:8px 0; }
+
+        .gf-opt { display:flex; align-items:center; gap:10px; padding:6px 0; font-size:14px; cursor:pointer; }
+        .gf-opt input { width:18px; height:18px; accent-color:#673ab7; }
+
+        .gf-grid { width:100%; border-collapse:collapse; font-size:14px; }
+        .gf-grid th { font-weight:500; color:#5f6368; padding:8px 6px; text-align:center; }
+        .gf-grid td { padding:10px 6px; text-align:center; border-top:1px solid #eee; }
+        .gf-grid td:first-child, .gf-grid th:first-child { text-align:left; font-weight:500; color:#202124; }
+        .gf-grid input { width:18px; height:18px; accent-color:#673ab7; }
+        .gf-scroll { overflow-x:auto; }
+
+        .gf-actions { display:flex; align-items:center; gap:18px; margin-top:20px; }
+        .gf-actions button { background:#673ab7; color:#fff; border:none; border-radius:6px; padding:10px 28px;
+                             font-size:14px; font-weight:600; cursor:pointer; }
+        .gf-actions a { color:#673ab7; text-decoration:none; font-weight:600; font-size:14px; }
+    </style>
+</head>
+<body>
+<div class="gf-wrap">
+
+    <div class="gf-banner">
+        <div>Filling asset information for <strong>{{ target.name }}</strong>
+            &middot; {{ target.department.name|default:"No department" }}
+            &middot; only the employee code is required</div>
+        <a href="{% url 'manage_users' %}">&larr; Back to users</a>
     </div>
-    <button type="submit">Save asset information</button>
-</form>
-{% endblock %}
+
+    {% for m in messages %}<div class="gf-msg">{{ m }}</div>{% endfor %}
+    {% if errors %}<div class="gf-msg gf-error">Please correct the highlighted questions.</div>{% endif %}
+
+    <div class="gf-card gf-title">
+        <h1>{{ form.title }}</h1>
+        {% if form.description %}<p>{{ form.description }}</p>{% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% for f in fields %}
+            {% if f.kind == "section" %}
+                <div class="gf-section">
+                    <h2>{{ f.title }}</h2>
+                    {% if f.description %}<p>{{ f.description }}</p>{% endif %}
+                </div>
+
+            {% elif f.kind == "text" %}
+                {% if f.title or f.description %}
+                <div class="gf-card">
+                    {% if f.title %}<h3>{{ f.title }}</h3>{% endif %}
+                    {% if f.description %}<p class="gf-desc">{{ f.description }}</p>{% endif %}
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="gf-card{% if f.error %} has-error{% endif %}">
+                    <label class="gf-q">{{ f.el.question_text }}{% if f.is_code %}<span class="gf-req">*</span>{% endif %}</label>
+                    {% if f.error %}<div class="gf-err">{{ f.error }}</div>{% endif %}
+
+                    {% if f.type == "short" %}
+                        <input class="gf-input" type="text" name="{{ f.name }}" value="{{ f.text }}" placeholder="Your answer">
+
+                    {% elif f.type == "paragraph" %}
+                        <textarea class="gf-input" name="{{ f.name }}" rows="3" placeholder="Your answer">{{ f.text }}</textarea>
+
+                    {% elif f.type == "date" %}
+                        <input class="gf-input" type="date" name="{{ f.name }}" value="{{ f.text }}" style="max-width:220px;">
+
+                    {% elif f.type == "time" %}
+                        <input class="gf-input" type="time" name="{{ f.name }}" value="{{ f.text }}" style="max-width:220px;">
+
+                    {% elif f.type == "dropdown" %}
+                        <select class="gf-input" name="{{ f.name }}" style="max-width:300px;">
+                            <option value="">Choose</option>
+                            {% for o in f.options %}<option value="{{ o.text }}" {% if o.checked %}selected{% endif %}>{{ o.text }}</option>{% endfor %}
+                        </select>
+
+                    {% elif f.type == "mcq" or f.type == "linear_scale" %}
+                        {% for o in f.options %}
+                        <label class="gf-opt"><input type="radio" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
+                        {% endfor %}
+
+                    {% elif f.type == "checkbox" %}
+                        {% for o in f.options %}
+                        <label class="gf-opt"><input type="checkbox" name="{{ f.name }}" value="{{ o.text }}" {% if o.checked %}checked{% endif %}> {{ o.text }}</label>
+                        {% endfor %}
+
+                    {% elif f.type == "mcq_grid" or f.type == "checkbox_grid" %}
+                        <div class="gf-scroll">
+                        <table class="gf-grid">
+                            <tr><th></th>{% for c in f.cols %}<th>{{ c }}</th>{% endfor %}</tr>
+                            {% for row in f.rows %}
+                            <tr>
+                                <td>{{ row.label }}</td>
+                                {% for cell in row.cells %}
+                                <td><input type="{% if f.type == 'checkbox_grid' %}checkbox{% else %}radio{% endif %}"
+                                           name="{{ f.name }}__{{ row.i }}" value="{{ cell.col }}" {% if cell.checked %}checked{% endif %}></td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        </div>
+
+                    {% else %}
+                        <span style="color:#5f6368; font-size:14px;">This question type can't be filled in here.</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="gf-actions">
+            <button type="submit">Save</button>
+            <a href="{% url 'manage_users' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

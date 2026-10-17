@@ -131,6 +131,9 @@
 
 /* sections = JSON.parse('{{ elements_json|escapejs }}');  */
 let sections = [];
+let activeId = null;   // null = the form title card is active; otherwise the id of the active section
+const CHOOSER = document.getElementById("initialChooser");     // the one and only toolbar
+const HEADER_ROW = CHOOSER.closest(".SectionRow");
 
 {% if elements_json %}
 (function () {
@@ -143,7 +146,7 @@ let sections = [];
 })();
 {% endif %}
 
-
+if (sections.length) activeId = sections[sections.length - 1].id;
 /* =========================================================
    SYNC DOM VALUES INTO SECTIONS ARRAY
    ========================================================= */
@@ -251,24 +254,34 @@ function addSection(type) {
         title: type === "text" ? "Untitled Title" : type === "sec" ? "Untitled Section" : undefined,
         description: (type === "text" || type === "sec") ? "" : undefined
     };
-
-    sections.push(section);
+    let insertAt;
+    if (activeId === null) {
+        insertAt = 0;
+    } else {
+        const pos = sections.findIndex(function (s) { return s.id === activeId; });
+        insertAt = pos === -1 ? sections.length : pos + 1;
+    }
+    sections.splice(insertAt, 0, section);
+    activeId = section.id;
     renderSections();
 
+    const newRow = document.querySelector('#sectionsContainer .SectionRow[data-id="' + section.id + '"]');
+    if (newRow) {
+        newRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        const first = newRow.querySelector("input[type=text], textarea");
+        if (first) { first.focus(); first.select(); }
+    }
 }
-
-/* =========================================================
-   DELETE SECTION
-   ========================================================= */
 
 function deleteSection(id) {
 
-    syncSectionsFromDOM();   // preserve everything else before rebuild
+    syncSectionsFromDOM();
 
-    sections = sections.filter(function(section) {
-        return section.id !== id;
-    });
-
+    const idx = sections.findIndex(function (s) { return s.id === id; });
+    sections = sections.filter(function (s) { return s.id !== id; });
+    if (activeId === id) {
+        activeId = idx > 0 ? sections[idx - 1].id : null;
+    }
     renderSections();
 }
 
@@ -293,63 +306,25 @@ function handleImage(input, id) {
 /* =========================================================
    RENDER ALL SECTIONS
    ========================================================= */
-
 function renderSections() {
 
     const container = document.getElementById("sectionsContainer");
 
+    HEADER_ROW.appendChild(CHOOSER);      // park the toolbar so clearing the container doesn't destroy it
     container.innerHTML = "";
 
-    const initialChooser = document.getElementById("initialChooser");
-
-
-    /*
-       Same behavior as:
-
-       {sections.length === 0 && <ChooseSec />}
-    */
-
-    if (sections.length === 0) {
-
-        initialChooser.style.display = "";
-
-    } else {
-
-        initialChooser.style.display = "none";
-    }
-
-
-    sections.forEach(function(section, index) {
-
+    sections.forEach(function (section, index) {
         const row = document.createElement("div");
-
         row.className = "SectionRow";
-
-
-        /* Render the actual block */
-
+        row.dataset.id = section.id;
         row.innerHTML = renderSection(section, index);
-
-
-        /*
-
-           Same behavior as:
-
-           {isLast && <ChooseSec onAdd={addSection} />}
-
-        */
-
-        if (index === sections.length - 1) {
-
-            row.innerHTML += createChooser();
-
-        }
-
-
         container.appendChild(row);
-
     });
+
+    positionChooser();
 }
+   
+
 
 
 /* =========================================================
@@ -922,6 +897,62 @@ function createRequired(id, checked) {
     `;
 
 }
+function positionChooser() {
+    let target = HEADER_ROW;
+    let found = false;
+    document.querySelectorAll("#sectionsContainer .SectionRow").forEach(function (row) {
+        const isActive = activeId !== null && row.dataset.id === String(activeId);
+        row.classList.toggle("is-active", isActive);
+        if (isActive) { target = row; found = true; }
+    });
+    if (!found) activeId = null;
+    HEADER_ROW.classList.toggle("is-active", activeId === null);
+    target.appendChild(CHOOSER);          // move the toolbar next to the active card
+    CHOOSER.style.transform = "translateY(0px)";
+    scheduleChooserUpdate();        // move the toolbar next to the active card
+}
+
+function setActiveRow(row) {
+    if (!row || !row.isConnected) return;     // ignore rows that were just removed
+    const s = sections.find(function (x) { return String(x.id) === row.dataset.id; });
+    const newId = s ? s.id : null;
+    if (newId === activeId) return;
+    activeId = newId;
+    positionChooser();
+}
+
+["click", "focusin"].forEach(function (evt) {
+    document.addEventListener(evt, function (e) {
+        if (e.target.closest(".ChooseSec")) return;          // clicks on the toolbar itself
+        setActiveRow(e.target.closest(".SectionRow"));
+    });
+});
+const SCROLLER = document.querySelector(".adm-main") || window;   // the scrolling area of the page
+let chooserTick = false;
+
+function updateChooserOffset() {
+    const row = CHOOSER.parentElement;                  // the active section's row
+    if (!row) return;
+    const rowRect = row.getBoundingClientRect();
+    const viewTop = SCROLLER === window ? 0 : SCROLLER.getBoundingClientRect().top;
+    let offset = viewTop + 16 - rowRect.top;            // keep it 16px below the top of the view
+    const maxOffset = Math.max(0, rowRect.height - CHOOSER.offsetHeight);
+    offset = Math.min(Math.max(offset, 0), maxOffset);  // never leave the active section's area
+    CHOOSER.style.transform = "translateY(" + offset + "px)";
+}
+
+function scheduleChooserUpdate() {
+    if (chooserTick) return;
+    chooserTick = true;
+    requestAnimationFrame(function () {
+        chooserTick = false;
+        updateChooserOffset();
+    });
+}
+
+SCROLLER.addEventListener("scroll", scheduleChooserUpdate, { passive: true });
+window.addEventListener("resize", scheduleChooserUpdate);
+document.addEventListener("input", scheduleChooserUpdate);   // the section grows when you add options
 renderSections();
 </script>
 

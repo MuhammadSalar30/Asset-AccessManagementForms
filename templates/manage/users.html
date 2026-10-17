@@ -9,6 +9,7 @@
     <form class="inline" method="post" action="{% url 'create_user' %}">
         {% csrf_token %}
         <input name="name" placeholder="Full name" required>
+        <input name="employee_code" placeholder="Employee code">
         <input name="email" type="email" placeholder="Email" required>
         <input name="password" type="password" placeholder="Temporary password" required minlength="6">
         <select name="department">
@@ -23,7 +24,7 @@
     <h2>All users ({{ users|length }})</h2>
 
     <form class="filters" method="get">
-        <input name="q" value="{{ q }}" placeholder="Search name or email">
+        <input name="q" value="{{ q }}" placeholder="Search name, email or code">
         <select name="department">
             <option value="">All departments</option>
             {% for d in departments %}
@@ -36,10 +37,17 @@
 
     <div class="table-wrap">
     <table>
-        <tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Actions</th></tr>
+        <tr><th>Name</th><th>Code</th><th>Email</th><th>Department</th><th>Role</th><th>Actions</th></tr>
         {% for u in users %}
         <tr>
             <td>{{ u.name }}{% if u.user_id == me.user_id %} <span class="muted">(you)</span>{% endif %}</td>
+            <td>
+                <form class="inline" method="post" action="{% url 'set_employee_code' u.user_id %}">
+                    {% csrf_token %}
+                    <input name="employee_code" value="{{ u.employee_code|default:'' }}" placeholder="—" style="width:90px;">
+                    <button type="submit" class="ghost">Save</button>
+                </form>
+            </td>
             <td>{{ u.email }}</td>
             <td>
                 <form class="inline" method="post" action="{% url 'set_user_department' u.user_id %}">
@@ -54,38 +62,36 @@
             </td>
             <td>{% if u.is_admin %}<span class="badge admin">Admin</span>{% else %}<span class="badge">User</span>{% endif %}</td>
             <td>
-                {% if u.user_id != me.user_id %}
-                <form class="inline" method="post" action="{% url 'toggle_admin' u.user_id %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="make_admin" value="{% if u.is_admin %}0{% else %}1{% endif %}">
-                    <button type="submit" class="ghost">{% if u.is_admin %}Remove admin{% else %}Make admin{% endif %}</button>
-                </form>
-                {% endif %}
-                <form class="inline" method="post" action="{% url 'reset_user_password' u.user_id %}"
-                      onsubmit="return confirm('Reset password for {{ u.name|escapejs }}?');">
-                    {% csrf_token %}
-                    <input type="password" name="password" placeholder="New password" required minlength="6" style="width:130px;">
-                    <button type="submit" class="ghost">Reset</button>
-                </form>
-                                {% if u.user_id != me.user_id %}
-                <form class="inline" method="post" action="{% url 'delete_user' u.user_id %}"
-                      onsubmit="return confirm('Delete {{ u.name|escapejs }}? The account is removed permanently. Forms they created are transferred to you, and requests they submitted stay on record without a name.');">
-                    {% csrf_token %}
-                    <button type="submit" class="danger">Delete</button>
-                </form>
-                {% endif %}
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <a class="btn" style="padding:6px 12px;" href="{% url 'manage_asset_fill' u.user_id %}">Assets</a>
+
+                    {% if u.user_id != me.user_id %}
+                    <form class="inline" method="post" action="{% url 'toggle_admin' u.user_id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="make_admin" value="{% if u.is_admin %}0{% else %}1{% endif %}">
+                        <button type="submit" class="ghost">{% if u.is_admin %}Remove admin{% else %}Make admin{% endif %}</button>
+                    </form>
+                    {% endif %}
+
+                    <form class="inline" method="post" action="{% url 'reset_user_password' u.user_id %}"
+                          onsubmit="return confirm('Reset password for {{ u.name|escapejs }}?');">
+                        {% csrf_token %}
+                        <input type="password" name="password" placeholder="New password" required minlength="6" style="width:130px;">
+                        <button type="submit" class="ghost">Reset</button>
+                    </form>
+
+                    {% if u.user_id != me.user_id %}
+                    <form class="inline" method="post" action="{% url 'delete_user' u.user_id %}"
+                          onsubmit="return confirm('Delete {{ u.name|escapejs }}? The account is removed permanently. Forms they created are transferred to you, and requests they submitted stay on record without a name.');">
+                        {% csrf_token %}
+                        <button type="submit" class="danger">Delete</button>
+                    </form>
+                    {% endif %}
+                </div>
             </td>
         </tr>
         {% empty %}
-        <tr>
-            <td>
-                <form class="inline" method="post" action="{% url 'set_employee_code' u.user_id %}">
-                    {% csrf_token %}
-                    <input name="employee_code" value="{{ u.employee_code|default:'' }}" placeholder="—" style="width:90px;">
-                    <button type="submit" class="ghost">Save</button>
-                </form>
-            </td>
-        </tr>
+        <tr><td colspan="6" class="muted">No users match.</td></tr>
         {% endfor %}
     </table>
     </div>

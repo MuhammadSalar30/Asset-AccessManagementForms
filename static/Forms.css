@@ -7,7 +7,13 @@ html, body {
     width: 100%;
     overflow-x: hidden;
 }
- 
+.SectionRow.is-active .Ques,
+.SectionRow.is-active .DescBlock,
+.SectionRow.is-active .ImageBlock,
+.SectionRow.is-active .SecBlock {
+    box-shadow: 0 0 0 2px #673ab7;
+}
+.ChooseSec { will-change: transform; z-index: 5; }
 
 .Form input,
 .Form textarea {

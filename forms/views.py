@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 from django.urls import path
 from .decorators import responses_access_required
+from django.core.cache import cache
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response 
@@ -83,20 +84,21 @@ def test_api(request):
 
 def homepage_view(request):
     return render(request,"homepage.html")
+
 def register_view(request):
     ctx = {"departments": Department.objects.order_by("name")}
 
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
+        code = request.POST.get("employee_code", "").strip()
         email = request.POST.get("email", "").strip().lower()
         department_id = request.POST.get("department", "")
         password = request.POST.get("password")
         confirm_password = request.POST.get("confirm_password")
 
-        if not all([name, email, department_id, password, confirm_password]):
+        if not all([name, code, email, department_id, password, confirm_password]):
             messages.error(request, "All fields are required.")
             return render(request, "signup.html", ctx)
-
         if password != confirm_password:
             messages.error(request, "Passwords do not match.")
             return render(request, "signup.html", ctx)
@@ -105,17 +107,22 @@ def register_view(request):
         if department is None:
             messages.error(request, "Please choose a valid department.")
             return render(request, "signup.html", ctx)
-
+        if User.objects.filter(employee_code__iexact=code).exists():
+            messages.error(request, "This employee code is already registered.")
+            return render(request, "signup.html", ctx)
         if User.objects.filter(email__iexact=email).exists():
             messages.error(request, "An account with this email already exists.")
             return render(request, "signup.html", ctx)
 
-        User.objects.create(name=name, email=email, department=department,
+        User.objects.create(name=name, email=email, employee_code=code, department=department,
                             password=make_password(password))
-        messages.success(request, "Account created successfully.")
+        messages.success(request, "Account created successfully. Log in with your employee code.")
         return redirect("login")
 
-    return render(request, "signup.html", ctx)
+    return render(request, "signup.html", ctx)   
+
+
+
 @admin_required
 def settings_view(request):
     if "user_id" not in request.session:
@@ -123,34 +130,94 @@ def settings_view(request):
     return render(request, "manage/settings.html")
 def is_admin_session(request):
     return request.session.get("user_role") == "admin"
+def _login_blocked(key):
+    return cache.get(f"login_fail:{key}", 0) >= 5
 
+
+def _login_failed(key):
+    cache.set(f"login_fail:{key}", cache.get(f"login_fail:{key}", 0) + 1, 600)
+
+#def login_view(request):
+ #   if request.method == "POST":
+  #      email = request.POST.get("email", "").strip()
+  #      password = request.POST.get("password", "")
+   #     remember = request.POST.get("remember")
+
+   #     if not email or not password:
+   #         messages.error(request, "Email and password are required.")
+#            return render(request, "login.html")
+
+#        user = User.objects.filter(email__iexact=email).first()
+#        if user is None or not check_password(password, user.password):
+ #           messages.error(request, "Invalid email or password.")
+   #         return render(request, "login.html")
+  #      list(messages.get_messages(request))   # discard any leftover error messages
+    #    request.session["user_id"] = str(user.user_id)
+   #     request.session["user_name"] = user.name
+   #     request.session["user_email"] = user.email
+   #     request.session["department"] = user.department.name if user.department else ""
+    #    request.session["user_role"] = "admin" if user.is_admin else "user"
+
+     #   request.session.set_expiry(1209600 if remember else 0)
+        #return redirect("forms_list")
+     #   next_url = request.session.pop("after_login", None)
+    #    if next_url and next_url.startswith("/"):
+    #        return redirect(next_url)
+        #return redirect("manage_org" if user.is_admin else "forms_list")
+    #    if user.is_admin:
+    #        return redirect("manage_org")
+    #    if user.headed_departments.exists():
+     #       return redirect("hod_approvals")
+    #    return redirect("my_assets")
+
+   # return render(request, "login.html")
 def login_view(request):
     if request.method == "POST":
-        email = request.POST.get("email", "").strip()
+        ident = (request.POST.get("employee_code") or request.POST.get("email") or "").strip()
         password = request.POST.get("password", "")
         remember = request.POST.get("remember")
 
-        if not email or not password:
-            messages.error(request, "Email and password are required.")
+        if not ident or not password:
+            messages.error(request, "Employee code and password are required.")
             return render(request, "login.html")
 
-        user = User.objects.filter(email__iexact=email).first()
-        if user is None or not check_password(password, user.password):
-            messages.error(request, "Invalid email or password.")
+        key = ident.lower()
+        if _login_blocked(key):
+            messages.error(request, "Too many failed attempts. Please wait 10 minutes and try again.")
             return render(request, "login.html")
-        list(messages.get_messages(request))   # discard any leftover error messages
+
+        #user = User.objects.filter(employee_code__iexact=ident).first()
+        #by_code = user is not None
+        #if user is None and "@" in ident:
+            # accounts that have no employee code yet (for example the first admin) can still use their email
+           # user = User.objects.filter(email__iexact=ident).first()
+        user = User.objects.filter(employee_code__iexact=ident).first()
+        by_code = user is not None
+        if user is None and "@" in ident:
+            # only admins may log in with their email; everyone else must use their employee code
+            user = User.objects.filter(email__iexact=ident, role="admin").first()
+
+        if user is None or not check_password(password, user.password):
+            _login_failed(key)
+            messages.error(request, "Invalid employee code or password.")
+            return render(request, "login.html")
+
+        cache.delete(f"login_fail:{key}")
+        list(messages.get_messages(request))      # discard leftover messages
+
         request.session["user_id"] = str(user.user_id)
         request.session["user_name"] = user.name
         request.session["user_email"] = user.email
         request.session["department"] = user.department.name if user.department else ""
         request.session["user_role"] = "admin" if user.is_admin else "user"
+        if by_code:                               # they just proved their code, so no second code prompt
+            request.session["asset_code_ok"] = {"user": str(user.pk), "ts": time.time(), "login": True}
 
         request.session.set_expiry(1209600 if remember else 0)
-        #return redirect("forms_list")
+
         next_url = request.session.pop("after_login", None)
         if next_url and next_url.startswith("/"):
             return redirect(next_url)
-        #return redirect("manage_org" if user.is_admin else "forms_list")
         if user.is_admin:
             return redirect("manage_org")
         if user.headed_departments.exists():
@@ -981,7 +1048,8 @@ def manage_users(request):
     dept = request.GET.get("department", "")
     users = User.objects.select_related("department").order_by("name")
     if q:
-        users = users.filter(Q(name__icontains=q) | Q(email__icontains=q))
+       # users = users.filter(Q(name__icontains=q) | Q(email__icontains=q))
+        users = users.filter(Q(name__icontains=q) | Q(email__icontains=q) | Q(employee_code__icontains=q))
     if _int_or_none(dept):
         users = users.filter(department_id=int(dept))
     return render(request, "manage/users.html", {
@@ -993,23 +1061,49 @@ def manage_users(request):
     })
 
 
+#@admin_required
+#@require_POST
+#def create_user(request):
+#    name = request.POST.get("name", "").strip()
+#    email = request.POST.get("email", "").strip().lower()
+#    code = request.POST.get("employee_code", "").strip() or None
+#    password = request.POST.get("password", "")
+#    if not (name and email and password):
+#        messages.error(request, "Name, email and password are required.")
+#    elif User.objects.filter(email__iexact=email).exists():
+#        messages.error(request, "A user with that email already exists.")
+#    elif code and User.objects.filter(employee_code__iexact=code).exists():
+#        messages.error(request, "That employee code is already used by another account.")
+#    else:
+#        User.objects.create(name=name, email=email, employee_code=code,
+#                            password=make_password(password),
+#                            department_id=_int_or_none(request.POST.get("department")))
+#        messages.success(request, f"User {name} created.")
+#    return redirect("manage_users")
+
 @admin_required
 @require_POST
 def create_user(request):
     name = request.POST.get("name", "").strip()
     email = request.POST.get("email", "").strip().lower()
+    code = request.POST.get("employee_code", "").strip() or None
     password = request.POST.get("password", "")
     if not (name and email and password):
         messages.error(request, "Name, email and password are required.")
     elif User.objects.filter(email__iexact=email).exists():
         messages.error(request, "A user with that email already exists.")
+    elif code and User.objects.filter(employee_code__iexact=code).exists():
+        messages.error(request, "That employee code is already used by another account.")
     else:
-        User.objects.create(name=name, email=email,
-                            password=make_password(password),
-                            department_id=_int_or_none(request.POST.get("department")))
-        messages.success(request, f"User {name} created.")
+        new_user = User.objects.create(name=name, email=email, employee_code=code,
+                                       password=make_password(password),
+                                       department_id=_int_or_none(request.POST.get("department")))
+        # open the asset form for the new user, if the Assets & Access form is set up
+        if Form.objects.filter(purpose="asset_access").exclude(code_element=None).exists():
+            messages.success(request, f"User {name} created. Now fill in their asset information.")
+            return redirect("manage_asset_fill", user_id=new_user.user_id)
+        messages.success(request, f"User {name} created. Set up the Assets & Access form under System Forms to record their assets.")
     return redirect("manage_users")
-
 
 @admin_required
 @require_POST
@@ -1258,11 +1352,15 @@ def get_system_form(purpose):
     return Form.objects.filter(purpose=purpose, is_published=True).first()
 
 
+#def _code_verified(request, user):
+ #   ok = request.session.get("asset_code_ok")
+ #   return bool(ok) and ok.get("user") == str(user.pk) and time.time() - ok.get("ts", 0) < 900
+
 def _code_verified(request, user):
     ok = request.session.get("asset_code_ok")
-    return bool(ok) and ok.get("user") == str(user.pk) and time.time() - ok.get("ts", 0) < 900
-
-
+    if not ok or ok.get("user") != str(user.pk):
+        return False
+    return bool(ok.get("login")) or time.time() - ok.get("ts", 0) < 900
 def my_assets(request):
     user = _login_user(request)
     if user is None:
@@ -1749,9 +1847,12 @@ def manage_asset_fill(request, user_id):
                     Answer.objects.create(response=response, element=el, answer_text=stored)
                 target.employee_code = new_code
                 target.save(update_fields=["employee_code"])
+            #messages.success(request, f"Asset information saved for {target.name}. "
+            #                          "They only need to enter their employee code after logging in.")
+            #return redirect("manage_assets")
             messages.success(request, f"Asset information saved for {target.name}. "
-                                      "They only need to enter their employee code after logging in.")
-            return redirect("manage_assets")
+                                      "They can now log in with their employee code and password.")
+            return redirect("manage_users")
 
         getter = lambda el: _values_from_post(el, request.POST)
     else:
