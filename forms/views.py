@@ -979,22 +979,22 @@ def _int_or_none(value):
 def manage_org(request):
     """Admin dashboard."""
     departments = (Department.objects.select_related("hod")
-                   .annotate(member_count=Count("members", distinct=True),
-                             form_count=Count("members__forms", distinct=True))
-                   .order_by("name"))
+                   .annotate(member_count=Count("members", distinct=True)).order_by("name"))
+    rows = laptop_inventory()
     return render(request, "manage/dashboard.html", {
         "me": request.org_user,
         "total_users": User.objects.count(),
         "total_admins": User.objects.filter(role="admin").count(),
         "total_departments": departments.count(),
-        "total_forms": Form.objects.count(),
-        "published_forms": Form.objects.filter(is_published=True).count(),
-        "total_responses": FormResponse.objects.count(),
         "no_hod": Department.objects.filter(hod__isnull=True).count(),
         "departments": departments,
-        "recent_forms": Form.objects.select_related("owner").order_by("-created_at")[:6],
-        "pending_provision": FormResponse.objects.filter(status="pending_it").exclude(respondent=request.org_user).count(),
+        "pending_provision": FormResponse.objects.filter(status="pending_it")
+                             .exclude(respondent=request.org_user).count(),
+        "laptop_total": len(rows),
+        "brand_bars": _bars(Counter(r["brand"] for r in rows)),
+        "dept_bars": _bars(Counter(r["department"] for r in rows)),
     })
+
 
 
 @admin_required
@@ -1187,7 +1187,7 @@ def notify_requester_decision(response, decision, comment):
     user = response.respondent
     if not user or not user.email:
         return
-    verdict = ("approved by your HOD. It now waits for the administrator's final OK"
+    verdict = ("approved by your HOD. It now waits for the administrator's final approval"
                if decision == "approved" else "rejected by your HOD")
     body = f'Your request "{response.form.title}" was {verdict}.'
     if comment:
@@ -1955,3 +1955,113 @@ def provision_decide(request, response_id):
 
     messages.success(request, f"Request {decision}.")
     return redirect("provision_queue")
+#LAPTOP_FIELDS = {
+ #   "brand": "brand", "model #": "model", "serial #": "serial", "track id": "track",
+ #   "core - gen": "cpu", "ram": "ram", "ssd/hdd": "storage",
+#}
+LAPTOP_FIELDS = {
+    "laptop brand name": "brand", "brand": "brand",
+    "laptop model #": "model", "model #": "model",
+    "laptop serial #": "serial", "serial #": "serial",
+    "track id": "track",
+    "laptop core - gen": "cpu", "core - gen": "cpu",
+    "laptop ram": "ram", "ram": "ram",
+    "laptop ssd/hdd": "storage", "ssd/hdd": "storage",
+}
+BRAND_PATTERNS = [
+    ("Dell", r"\b(dell|latitude|inspiron|vostro|xps|precision)\b"),
+    ("HP", r"\b(hp|hewlett|probook|elitebook|pavilion|zbook|envy|omen|victus)\b"),
+    ("Lenovo", r"\b(lenovo|thinkpad|ideapad|thinkbook|yoga|legion)\b"),
+    ("Acer", r"\b(acer|aspire|travelmate|swift|nitro|predator)\b"),
+    ("Asus", r"\b(asus|zenbook|vivobook|rog|tuf|expertbook)\b"),
+    ("Apple", r"\b(apple|macbook|mac)\b"),
+    ("Microsoft", r"\b(microsoft|surface)\b"),
+    ("Toshiba", r"\b(toshiba|dynabook|satellite|tecra)\b"),
+    ("MSI", r"\b(msi)\b"),
+    ("Huawei", r"\b(huawei|matebook)\b"),
+    ("Samsung", r"\b(samsung|galaxy book)\b"),
+]
+
+
+def detect_brand(text):
+    t = (text or "").lower()
+    for brand, pattern in BRAND_PATTERNS:
+        if re.search(pattern, t):
+            return brand
+    return ""
+
+
+def laptop_inventory():
+    """One row per laptop currently held by an employee (admin-approved or admin-recorded records)."""
+    latest = {}
+    qs = (FormResponse.objects.filter(form__purpose="asset_access", status__in=["recorded", "approved_it"])
+          .select_related("respondent", "department").order_by("submitted_at"))
+    for r in qs:
+        latest[r.respondent_id or r.response_id] = r          # newest record per employee wins
+
+    ids = [r.response_id for r in latest.values()]
+    fields = defaultdict(dict)
+    for a in (Answer.objects.filter(response_id__in=ids, element__question_type__in=["short", "dropdown"])
+              .select_related("element")):
+        key = LAPTOP_FIELDS.get(a.element.question_text.strip().lower())
+        if key and a.answer_text.strip():
+            fields[a.response_id][key] = a.answer_text.strip()
+
+    rows, seen_serials = [], set()
+    for r in sorted(latest.values(), key=lambda x: x.submitted_at, reverse=True):
+        d = fields.get(r.response_id, {})
+        if not (d.get("serial") or d.get("model")):
+            continue
+        serial = d.get("serial", "").lower()
+        if serial:
+            if serial in seen_serials:                         # same laptop held by an older record
+                continue
+            seen_serials.add(serial)
+        brand = detect_brand(d.get("brand", "")) or d.get("brand", "").title() or detect_brand(d.get("model", "")) or "Other"
+        employee = r.respondent.name if r.respondent else "(deleted user)"
+        department = r.department.name if r.department else "No department"
+        rows.append({
+            "resp_id": r.response_id, "employee": employee,
+            "code": r.respondent.employee_code if r.respondent and r.respondent.employee_code else "",
+            "department": department, "brand": brand,
+            "model": d.get("model", ""), "serial": d.get("serial", ""), "track": d.get("track", ""),
+            "cpu": d.get("cpu", ""), "ram": d.get("ram", ""), "storage": d.get("storage", ""),
+            "source": r.get_status_display(), "date": r.submitted_at,
+            "search": f"{employee} {department} {brand} {d.get('model','')} {d.get('serial','')} {d.get('track','')}".lower(),
+        })
+    return rows
+
+
+def _bars(counter):
+    top = max(counter.values()) if counter else 1
+    return [{"label": k, "count": v, "pct": round(100 * v / top)} for k, v in counter.most_common()]
+@admin_required
+def manage_laptops(request):
+    rows = laptop_inventory()
+    all_brands = sorted({r["brand"] for r in rows})
+    all_depts = sorted({r["department"] for r in rows})
+
+    brand = request.GET.get("brand", "")
+    dept = request.GET.get("department", "")
+    q = request.GET.get("q", "").strip().lower()
+    if brand:
+        rows = [r for r in rows if r["brand"] == brand]
+    if dept:
+        rows = [r for r in rows if r["department"] == dept]
+    if q:
+        rows = [r for r in rows if q in r["search"]]
+
+    by_brand = Counter(r["brand"] for r in rows)
+    by_dept = Counter(r["department"] for r in rows)
+    cross = Counter((r["department"], r["brand"]) for r in rows)
+    brands = [b for b, _ in by_brand.most_common()]
+    matrix = [{"department": d, "cells": [cross[(d, b)] for b in brands], "total": by_dept[d]}
+              for d in sorted(by_dept)]
+
+    return render(request, "manage/laptops.html", {
+        "rows": rows, "total": len(rows),
+        "brand_bars": _bars(by_brand), "dept_bars": _bars(by_dept),
+        "matrix_brands": brands, "matrix": matrix, "col_totals": [by_brand[b] for b in brands],
+        "all_brands": all_brands, "all_depts": all_depts,
+        "f_brand": brand, "f_dept": dept, "q": request.GET.get("q", ""),
+    })

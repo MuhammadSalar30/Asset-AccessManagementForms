@@ -1,143 +1,189 @@
-/* Container layout to perfectly center the auth form on the screen */
-.login-layout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  width: 100%;
-  background-color: #f8fafc; /* Soft off-white backdrop background */
-  font-family: system-ui, -apple-system, sans-serif;
-  padding: 20px;
-  box-sizing: border-box;
+:root {
+    --purple: #673ab7;
+    --purple-dark: #4527a0;
+    --purple-soft: #ede7f6;
+    --red: #d32f2f;
+    --ink: #1f1b2e;
+    --muted: #5f6368;
+    --line: #e4e0ee;
+    --bg: #faf8ff;
 }
 
-/* The card column wrapping structure */
-.auth-form-col {
-  width: 100%;
-  max-width: 420px; /* Standard clean dimensions for login boxes */
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+}
+a { color: var(--purple); text-decoration: none; font-weight: 600; }
+a:hover { text-decoration: underline; }
+
+.login-page {
+    display: grid;
+    grid-template-columns: 1.05fr .95fr;
+    min-height: 100vh;
 }
 
-/* Main card wrapping box styling */
+/* ---------- Brand panel ---------- */
+.brand-panel {
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    background: linear-gradient(135deg, #5e35b1, #4527a0 55%, #311b92);
+}
+.brand-panel::before,
+.brand-panel::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .07);
+}
+.brand-panel::before { width: 420px; height: 420px; top: -140px; right: -120px; }
+.brand-panel::after { width: 320px; height: 320px; bottom: -110px; left: -90px; background: rgba(211, 47, 47, .18); }
+
+.brand-panel-inner {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 48px 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 36px;
+}
+.logo-card {
+    align-self: flex-start;
+    background: #fff;
+    border-radius: 16px;
+    padding: 12px 22px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+}
+.logo-card img { display: block; height: 44px; width: auto; }
+
+.brand-copy h2 { font-size: clamp(30px, 3.2vw, 42px); line-height: 1.12; margin: 0 0 16px; letter-spacing: -.02em; }
+.brand-copy p { margin: 0 0 26px; color: #e6dcfa; font-size: 17px; line-height: 1.6; }
+.brand-points { list-style: none; margin: 0; padding: 0; }
+.brand-points li { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; font-size: 15.5px; }
+.brand-points li span {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(255, 255, 255, .18);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.brand-foot { color: #cdbcf0; font-size: 13px; }
+
+/* ---------- Form panel ---------- */
+.form-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 24px 32px;
+}
+.back-home { position: absolute; top: 22px; left: 28px; font-size: 14px; color: var(--muted); font-weight: 500; }
+.back-home:hover { color: var(--purple); text-decoration: none; }
+
 .auth-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 440px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 36px 36px 30px;
+    box-shadow: 0 24px 60px rgba(69, 39, 160, .12);
+    animation: rise .6s ease both;
 }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-/* The tiny introductory sub-label */
-.auth-card .eyebrow {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #2563eb; /* Primary theme Royal Blue brand color */
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+.mobile-logo { display: none; height: 40px; width: auto; margin-bottom: 18px; }
+.auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.auth-logo .app-mark { width: 44px; height: 44px; flex-shrink: 0; }
+.auth-logo div { display: flex; flex-direction: column; line-height: 1.2; }
+.auth-logo strong { font-size: 16px; }
+.auth-logo small { color: var(--muted); font-size: 12px; letter-spacing: .04em; }
+
+.eyebrow {
+    display: inline-block;
+    font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--purple); background: var(--purple-soft);
+    padding: 5px 13px; border-radius: 999px;
 }
+.auth-card h1 { font-size: 28px; margin: 14px 0 6px; letter-spacing: -.01em; }
+.sub { margin: 0 0 22px; color: var(--muted); font-size: 15px; }
 
-/* Heading title typography styling */
-.auth-card h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 6px 0;
+/* Messages */
+.alert { padding: 11px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; line-height: 1.45; }
+.alert-error { background: #fce8e6; color: #b3261e; border: 1px solid #f5c6c1; }
+.alert-success { background: #e6f4ea; color: #137333; border: 1px solid #c3e6cb; }
+.alert-info, .alert-warning { background: #e8f0fe; color: #1a56c4; border: 1px solid #c9dafc; }
+
+/* Fields */
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 7px; }
+.input-wrap { position: relative; }
+.input-wrap input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0 16px 0 44px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: #fff;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
 }
-
-/* Subtitle contextual block details text */
-.auth-card .sub {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0 0 24px 0;
+.input-wrap input::placeholder { color: #9a95a8; }
+.input-wrap input:focus { border-color: var(--purple); box-shadow: 0 0 0 4px rgba(103, 58, 183, .14); }
+.icon-left { position: absolute; left: 14px; top: 50%; width: 20px; height: 20px; margin-top: -10px; color: #8a84a0; pointer-events: none; }
+.input-wrap:focus-within .icon-left { color: var(--purple); }
+#password { padding-right: 70px; }
+.toggle-pw {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--purple); font-weight: 600; font-size: 13px;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer; font-family: inherit;
 }
+.toggle-pw:hover { background: var(--purple-soft); }
 
-/* Container grouping rows spacing */
-.form-group {
-  margin-bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.remember { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--muted); margin: 2px 0 20px; cursor: pointer; }
+.remember input { width: 17px; height: 17px; accent-color: var(--purple); }
+
+.btn-login {
+    width: 100%;
+    height: 50px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7e57c2, #5e35b1);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(103, 58, 183, .3);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
 }
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(103, 58, 183, .38); }
+.btn-login:disabled { opacity: .7; cursor: default; transform: none; }
 
-/* Label field titles styling */
-.field-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
+.forgot { margin: 16px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+.auth-links { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; font-size: 14.5px; color: var(--muted); }
+.legal { margin: 22px 0 0; font-size: 13px; color: var(--muted); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .login-page { grid-template-columns: 1fr; }
+    .brand-panel { display: none; }
+    .mobile-logo { display: block; }
+    .form-panel { padding-top: 70px; }
 }
-
-/* Input textbox styling rules */
-.form-control {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  color: #0f172a;
-  box-sizing: border-box;
-  transition: all 0.15s ease-in-out;
+@media (max-width: 480px) {
+    .auth-card { padding: 28px 22px 24px; }
 }
-
-/* Active focus highlighter behavior for textboxes */
-.form-control:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-/* Style standard native checkboxes slightly */
-input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: #2563eb; /* Colors the checked box brand blue */
-}
-
-/* Anchor links general interactive transitions color values */
-.auth-card a {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.15s ease;
-}
-
-.auth-card a:hover {
-  text-decoration: underline;
-  color: #1d4ed8;
-}
-
-/* Primary submission control button styling rules */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  background-color: #2563eb;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-/* Bottom footer sign-up contextual link box block */
-.auth-links {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 14px;
-  color: #64748b;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 16px;
+@media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
 }

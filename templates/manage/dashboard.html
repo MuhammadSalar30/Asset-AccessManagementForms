@@ -1,8 +1,20 @@
-{% extends "manage/base.html" %}
+{% extends "layout.html" %}
 {% block title %}Dashboard{% endblock %}
+{% block extra_head %}
+<style>
+    .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:14px; }
+    .bar-label { width:130px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .bar-track { flex:1; background:#f1f3f4; border-radius:6px; height:14px; overflow:hidden; }
+    .bar-fill { background:#673ab7; height:100%; border-radius:6px; }
+    .bar-count { width:36px; text-align:right; font-weight:600; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+    @media (max-width:900px) { .two-col { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
 {% block content %}
 <h1>Admin Dashboard</h1>
 <p class="adm-sub">Overview of your organization.</p>
+
 {% if pending_provision %}
 <div class="warn">{{ pending_provision }} request{{ pending_provision|pluralize }} approved by the HOD and waiting for your OK.
     <a href="{% url 'provision_queue' %}">Review now</a></div>
@@ -12,9 +24,7 @@
     <div class="stat"><span>{{ total_users }}</span>Users</div>
     <div class="stat"><span>{{ total_admins }}</span>Admins</div>
     <div class="stat"><span>{{ total_departments }}</span>Departments</div>
-    <div class="stat"><span>{{ total_forms }}</span>Forms</div>
-    <div class="stat"><span>{{ published_forms }}</span>Published</div>
-    <div class="stat"><span>{{ total_responses }}</span>Responses</div>
+    <div class="stat"><span>{{ laptop_total }}</span>Laptops provided</div>
 </div>
 
 {% if no_hod %}
@@ -22,39 +32,48 @@
     <a href="{% url 'manage_departments' %}">Assign now</a></div>
 {% endif %}
 
+<div class="two-col">
+    <div class="card">
+        <h2>Laptops by brand</h2>
+        {% for b in brand_bars %}
+        <div class="bar-row">
+            <span class="bar-label">{{ b.label }}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:{{ b.pct }}%"></div></div>
+            <span class="bar-count">{{ b.count }}</span>
+        </div>
+        {% empty %}
+        <p class="muted">No laptops recorded yet.</p>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h2>Laptops by department</h2>
+        {% for d in dept_bars %}
+        <div class="bar-row">
+            <span class="bar-label">{{ d.label }}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:{{ d.pct }}%"></div></div>
+            <span class="bar-count">{{ d.count }}</span>
+        </div>
+        {% empty %}
+        <p class="muted">No laptops recorded yet.</p>
+        {% endfor %}
+    </div>
+</div>
+<p style="margin:-6px 0 22px;"><a href="{% url 'manage_laptops' %}">View all laptops &rarr;</a></p>
+
 <div class="card">
     <h2>Departments overview</h2>
     <div class="table-wrap">
     <table>
-        <tr><th>Department</th><th>HOD</th><th>Members</th><th>Forms</th></tr>
+        <tr><th>Department</th><th>HOD</th><th>Members</th></tr>
         {% for d in departments %}
         <tr>
             <td>{{ d.name }}</td>
             <td>{{ d.hod.name|default:"—" }}</td>
             <td>{{ d.member_count }}</td>
-            <td>{{ d.form_count }}</td>
         </tr>
         {% empty %}
-        <tr><td colspan="4" class="muted">No departments yet.</td></tr>
-        {% endfor %}
-    </table>
-    </div>
-</div>
-
-<div class="card">
-    <h2>Recently created forms</h2>
-    <div class="table-wrap">
-    <table>
-        <tr><th>Title</th><th>Owner</th><th>Status</th><th>Created</th></tr>
-        {% for f in recent_forms %}
-        <tr>
-            <td>{{ f.title }}</td>
-            <td>{{ f.owner.name }}</td>
-            <td>{% if f.is_published %}<span class="badge pub">Published</span>{% else %}<span class="badge">Draft</span>{% endif %}</td>
-            <td>{{ f.created_at|date:"M d, Y" }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="muted">No forms yet.</td></tr>
+        <tr><td colspan="3" class="muted">No departments yet.</td></tr>
         {% endfor %}
     </table>
     </div>

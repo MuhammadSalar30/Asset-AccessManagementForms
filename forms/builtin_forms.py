@@ -13,12 +13,10 @@ def T(title, desc=""):
 def Q(text, qtype="short", req=False, options=None, rows=None, key=None):
     return {"t": "q", "text": text, "type": qtype, "req": req,
             "options": options or [], "rows": rows or [], "key": key}
-
-
 ASSET_SPEC = [
     T("Assets & Access Management",
       "A Manager or HOD (Custodian) must approve this form to request access & assets for their employee. "
-      "Your request goes to your HOD first, then to the IT Manager."),
+      "Your request goes to your HOD first, then to the administrator for final approval."),
 
     S("Part 1: Employee Information"),
     Q("Employee Code", req=True, key="code"),
@@ -29,43 +27,41 @@ ASSET_SPEC = [
 
     S("Part 2: Asset Information"),
     Q("Windows User ID"),
-   # Q("Email ID"),
-   # Q("Track ID"), Q("Model #"), Q("Serial #"), Q("Core - Gen"), Q("RAM"), Q("SSD/HDD"),
+    Q("Laptop Brand Name"),
+    Q("Laptop Model #"),
+    Q("Laptop Serial #"),
+    Q("Laptop Core - Gen"),
+    Q("Laptop RAM"),
+    Q("Laptop SSD/HDD"),
     Q("Accessories", "checkbox", options=["Bag", "Mouse", "Charger"]),
-   # Q("MAC ID # 1"), Q("MAC ID # 2"), Q("MAC ID # 3"),
-  #  Q("Cellular MAC 1"), Q("Cellular MAC 2"),
 
-    S("Part 3: Access"),
-   # Q("Application", "checkbox", options=["ERP (Universal)", "SAP"]),
-   # Q("ERP User ID"), Q("ERP License Type"), Q("SAP User ID"), Q("SAP License Type"),
-  #  Q("Internet Access", "mcq_grid", rows=["Laptop / Desktop", "Cellular"],
-   #   options=["Restricted", "Office Executive", "Learner", "Executive"]),
+    S("Part 3: Access",
+      "Please indicate for which applications, shares and environments you are requesting access. "
+      "If role-based access exists, please identify the role requested."),
 
     S("Sharing / NAS Drive Access",
-      "Folder name "
+      "Folder name with complete path, e.g. IT\\Employee\\Afzal Hussain. "
       "For other folders or files, use Request Folder / File in the menu."),
-] + [Q(f"Folder {i} - name with complete path") for i in range(1, 8)] + [
-   # Q("Accessibility", "mcq_grid", rows=[f"Folder {i}" for i in range(1, 8)],
-  #    options=["Full Access", "Read Only"]),
+] + [Q(f"Folder {i}") for i in range(1, 4)] + [
 
     S("Confirmation"),
     Q("I confirm that the information above is correct and I am requesting the assets and access listed.",
       "checkbox", req=True, options=["I confirm"]),
 
     T("Part 4: Approval",
-      "Your HOD / supervisor and then the IT Manager will review this request online. "
+      "Your HOD / supervisor and then the administrator will review this request online. "
       "You will be notified by email."),
 ]
 
 FOLDER_SPEC = [
     T("Folder / File Access Request",
       "Select the folder(s) you need and write the file name if your request is about a specific file. "
-      "Your request goes to your HOD first, then to the IT Manager."),
-    Q("File name (Write complete path of file, e.g. \\10.1.5.55\Common Sharing\Attendence Records\October Attendence..xlsx)"),
+      "Your request goes to your HOD first, then to the administrator for final approval."),
+    Q(r"File name (Write complete path of file, e.g. \\10.1.5.55\Common Sharing\Attendence Records\October Attendence..xlsx)"),
     Q("Folders", "checkbox", req=True, key="folders"),
-  #  Q("Access level", "mcq", req=True, options=["Full Access", "Read Only"]),
     Q("Reason for request", "paragraph", req=True),
 ]
+
 
 BUILTINS = {
     "asset_access": ("Assets & Access Management",

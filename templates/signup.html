@@ -1,180 +1,194 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Create Your Account</title>
-
-    <!-- Your existing Signup CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create your account | Assets &amp; Access Management Forms</title>
+    <link rel="stylesheet" href="{% static 'Login.css' %}">
     <link rel="stylesheet" href="{% static 'Signup.css' %}">
-
 </head>
-
 <body>
 
-    <main class="signup-layout">
+<!-- The app's own logo, defined once and reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="aam-logo" viewBox="0 0 64 64">
+        <defs>
+            <linearGradient id="aamg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7e57c2"/>
+                <stop offset="1" stop-color="#4527a0"/>
+            </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="16" fill="url(#aamg)"/>
+        <rect x="14" y="16" width="36" height="24" rx="3" fill="none" stroke="#fff" stroke-width="3"/>
+        <path d="M8 46h48" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        <path d="M24 28l6 6 11-11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+</svg>
 
-        <div class="auth-form-col">
+<main class="login-page">
 
-            <div class="auth-card">
-
-                <h1>Create Your Account</h1>
-
-
-                <form method="POST" action="{% url 'signup' %}">
-
-                    {% csrf_token %}
-
-
-                    <!-- Name -->
-
-                    <div class="form-group">
-
-                        <label class="field-label">
-                            Name
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="text"
-                            name="name"
-                            placeholder="Your Full Name"
-                            required
-                            autofocus
-                        >
-
-                    </div>
-
-
-                    <!-- Email -->
-
-                    <div class="form-group">
-                        
-{% if messages %}
-    {% for m in messages %}
-        <div style="padding:10px 14px; background:#fce8e6; color:#d93025; border-radius:6px; margin-bottom:12px; font-size:14px;">{{ m }}</div>
-    {% endfor %}
-{% endif %}
-
-<label for="employee_code">Employee code</label>
-<input type="text" id="employee_code" name="employee_code" placeholder="Employee code" required>
-                        <label class="field-label">
-                            Email
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="email"
-                            name="email"
-                            placeholder="you@kompasspakistan.com.pk"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- Department -->
-
-                  <div class="form-group">
-    <label class="field-label">Department</label>
-
-    <!--<select class="form-control" name="department_name" required>
-        <option value="">— Select department —</option>
-        <option value="F">Finance</option>
-        <option value="HR">HR</option>
-        <option value="Ink">Ink Store</option>
-        <option value="It">IT</option>
-        <option value="Maintain">Maintenance</option>
-        <option value="Product">Production</option>
-        <option value="Sales">Sales</option>
-        <option value="Store">Store</option>
-    </select> -->
-    <select name="department" required>
-    <option value="">Select department</option>
-    {% for d in departments %}
-        <option value="{{ d.pk }}">{{ d.name }}</option>
-    {% endfor %}
-</select>
-</div>
-
-
-                    <!-- Password -->
-
-                    <div class="form-group">
-
-                        <label class="field-label">
-                            Password
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="password"
-                            name="password"
-                            placeholder="••••••••"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- Confirm Password -->
-
-                    <div class="form-group">
-
-                        <label class="field-label">
-                            Confirm password
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="password"
-                            name="confirm_password"
-                            placeholder="Re-enter password"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- Create Account -->
-
-                    <button
-                        class="btn btn-primary"
-                        type="submit"
-                        style="width:100%;justify-content:center;margin-top:6px;"
-                    >
-                        Create Account
-                    </button>
-
-
-                </form>
-
-
-                <!-- Login link -->
-
-                <div class="auth-links">
-
-                    Already have an account?
-
-                    <a href="/">
-                        Login
-                    </a>
-
-                </div>
-
-
+    <!-- Brand panel -->
+    <aside class="brand-panel">
+        <div class="brand-panel-inner">
+            <div class="logo-card">
+                <img src="{% static 'assets/kompass-logo.png' %}" alt="Kompass Pakistan">
             </div>
 
+            <div class="brand-copy">
+                <h2>Create your account in a minute.</h2>
+                <p>Register with your employee code. Once you are in, you can submit asset, access and
+                    folder requests and follow each one through to approval.</p>
+                <ul class="brand-points">
+                    <li><span>&#10003;</span> Your employee code is your login</li>
+                    <li><span>&#10003;</span> Choose your department so your HOD receives your requests</li>
+                    <li><span>&#10003;</span> Get an email after every decision</li>
+                </ul>
+            </div>
+
+            <small class="brand-foot">Internal system &middot; Kompass Pakistan IT Department</small>
+        </div>
+    </aside>
+
+    <!-- Signup form -->
+    <section class="form-panel">
+        <a class="back-home" href="/">&larr; Back to home</a>
+
+        <div class="auth-card wide">
+            <img class="mobile-logo" src="{% static 'assets/kompass-logo.png' %}" alt="Kompass Pakistan">
+
+            <div class="auth-logo">
+                <svg class="app-mark" aria-hidden="true"><use href="#aam-logo"/></svg>
+                <div><strong>Assets &amp; Access</strong><small>Management Forms</small></div>
+            </div>
+
+            <span class="eyebrow">Get started</span>
+            <h1>Create your account</h1>
+            <p class="sub">Fill in your details to register.</p>
+
+            {% for m in messages %}
+                <div class="alert alert-{{ m.tags|default:'info' }}" role="alert">{{ m }}</div>
+            {% endfor %}
+            <div class="alert alert-error" id="clientError" role="alert" hidden>Passwords do not match.</div>
+
+            <form method="post" action="{% url 'signup' %}" id="signupForm">
+                {% csrf_token %}
+
+                <!-- Name -->
+                <div class="field">
+                    <label for="name">Full name</label>
+                    <div class="input-wrap">
+                        <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="name" name="name" placeholder="Your full name"
+                               value="{{ request.POST.name|default:'' }}" required autofocus autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- Employee code and department -->
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="employee_code">Employee code</label>
+                        <div class="input-wrap">
+                            <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2"/><path d="M14 10h4M14 14h4"/></svg>
+                            <input type="text" id="employee_code" name="employee_code" placeholder="Employee code"
+                                   value="{{ request.POST.employee_code|default:'' }}" required autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="department">Department</label>
+                        <div class="input-wrap">
+                            <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-2v18"/><path d="M12 9h8v12"/><path d="M8 9h1M8 13h1M8 17h1M16 13h1M16 17h1"/></svg>
+                            <select id="department" name="department" required>
+                                <option value="">Select department</option>
+                                {% for d in departments %}
+                                <option value="{{ d.pk }}" {% if request.POST.department == d.pk|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="input-wrap">
+                        <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                        <input type="email" id="email" name="email" placeholder="you@kompasspakistan.com.pk"
+                               value="{{ request.POST.email|default:'' }}" required autocomplete="email">
+                    </div>
+                    <p class="field-hint">Request updates are sent to this address.</p>
+                </div>
+
+                <!-- Passwords -->
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="pw1">Password</label>
+                        <div class="input-wrap">
+                            <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                            <input type="password" id="pw1" name="password" placeholder="At least 6 characters"
+                                   required minlength="6" autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="pw2">Confirm password</label>
+                        <div class="input-wrap">
+                            <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                            <input type="password" id="pw2" name="confirm_password" placeholder="Re-enter password"
+                                   required autocomplete="new-password">
+                        </div>
+                    </div>
+                </div>
+
+                <label class="remember">
+                    <input type="checkbox" id="showPw"> Show passwords
+                </label>
+
+                <button type="submit" class="btn-login">Create account</button>
+            </form>
+
+            <div class="auth-links">
+                Already have an account? <a href="{% url 'login' %}">Log in</a>
+            </div>
         </div>
 
-    </main>
+        <p class="legal">&copy; Kompass Pakistan</p>
+    </section>
 
+</main>
+
+<script>
+(function () {
+    var form = document.getElementById("signupForm");
+    var pw1 = document.getElementById("pw1");
+    var pw2 = document.getElementById("pw2");
+    var showPw = document.getElementById("showPw");
+    var err = document.getElementById("clientError");
+    var submit = form.querySelector(".btn-login");
+
+    showPw.addEventListener("change", function () {
+        var type = showPw.checked ? "text" : "password";
+        pw1.type = type;
+        pw2.type = type;
+    });
+
+    form.addEventListener("submit", function (e) {
+        if (pw1.value !== pw2.value) {            // catch a mismatch before sending
+            e.preventDefault();
+            err.hidden = false;
+            pw2.focus();
+            return;
+        }
+        err.hidden = true;
+        submit.disabled = true;                    // stop double clicks
+        submit.textContent = "Creating account\u2026";
+    });
+
+    window.addEventListener("pageshow", function (e) {   // coming back with the Back button
+        if (e.persisted) { submit.disabled = false; submit.textContent = "Create account"; }
+    });
+})();
+</script>
 </body>
-
 </html>

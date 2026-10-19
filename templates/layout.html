@@ -97,6 +97,7 @@
         <hr>
         <p class="adm-side-title">Administration</p>
         <a href="{% url 'manage_org' %}" class="{% if url_name == 'manage_org' %}active{% endif %}">Dashboard</a>
+                <a href="{% url 'manage_laptops' %}" class="{% if url_name == 'manage_laptops' %}active{% endif %}">Laptops</a>
         <a href="{% url 'provision_queue' %}" class="{% if url_name == 'provision_queue' or url_name == 'provision_detail' %}active{% endif %}">Requests to approve{% if pending_admin_count %} <span class="badge admin">{{ pending_admin_count }}</span>{% endif %}</a>
         <a href="{% url 'manage_departments' %}" class="{% if url_name == 'manage_departments' %}active{% endif %}">Departments</a>
         <a href="{% url 'manage_users' %}" class="{% if url_name == 'manage_users' %}active{% endif %}">Users</a>

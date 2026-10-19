@@ -1,141 +1,142 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Login - Forms</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | Assets &amp; Access Management Forms</title>
     <link rel="stylesheet" href="{% static 'Login.css' %}">
 </head>
-
 <body>
 
-    <main class="login-layout">
+<!-- The app's own logo, defined once and reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="aam-logo" viewBox="0 0 64 64">
+        <defs>
+            <linearGradient id="aamg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#7e57c2"/>
+                <stop offset="1" stop-color="#4527a0"/>
+            </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="16" fill="url(#aamg)"/>
+        <rect x="14" y="16" width="36" height="24" rx="3" fill="none" stroke="#fff" stroke-width="3"/>
+        <path d="M8 46h48" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        <path d="M24 28l6 6 11-11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+</svg>
 
-        <div class="auth-form-col">
+<main class="login-page">
 
-            <div class="auth-card">
-
-                <span class="eyebrow">Welcome back</span>
-
-                <h1>Sign in to AssetForms</h1>
-
-                <p class="sub">
-                    Enter your credentials to reach your dashboard.
-                </p>
-
-
-                <form method="POST" action="{% url 'login' %}">
-
-                    {% csrf_token %}
-
-
-                    <div class="form-group">
-{% if messages %}
-    {% for m in messages %}
-        <div style="padding:10px 14px; background:#fce8e6; color:#d93025; border-radius:6px; margin-bottom:12px; font-size:14px;">{{ m }}</div>
-    {% endfor %}
-{% endif %}
-                   <!--     <label class="field-label">
-                            Email
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="email"
-                            name="email"
-                            placeholder="you@kompasspakistan.com.pk"
-                            required
-                            autofocus
-                        >-->
-                    <label for="employee_code">Employee code</label>
-<input type="text" class="form-control" id="employee_code" name="employee_code" placeholder="Employee code"
-       required autofocus autocomplete="username">
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label class="field-label">
-                            Password
-                        </label>
-
-                        <input
-                            class="form-control"
-                            type="password"
-                            name="password"
-                            placeholder="••••••••"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div
-                        class="form-group"
-                        style="display:flex;align-items:center;justify-content:space-between;gap:8px;"
-                    >
-
-                        <span
-                            style="display:flex;align-items:center;gap:8px;"
-                        >
-
-                            <input
-                                type="checkbox"
-                                name="remember"
-                                id="remember"
-                            >
-
-                            <label
-                                for="remember"
-                                style="font-size:13px;color:var(--muted);margin:0;"
-                            >
-                                Remember me next time
-                            </label>
-
-                        </span>
-
-
-                        <a
-                            href="/forgot-password"
-                            style="font-size:13px;"
-                        >
-                            Forgot password?
-                        </a>
-
-                    </div>
-
-
-                    <button
-                        class="btn btn-primary"
-                        type="submit"
-                        style="width:100%;justify-content:center;margin-top:6px;"
-                    >
-                        Log In
-                    </button>
-
-                </form>
-
-
-                <div class="auth-links">
-
-                    Don't have an account?
-
-                    <a href="{% url 'signup' %}">
-                        Sign Up
-                    </a>
-
-                </div>
-
+    <!-- Brand panel -->
+    <aside class="brand-panel">
+        <div class="brand-panel-inner">
+            <div class="logo-card">
+                <img src="{% static 'assets/kompass-logo.png' %}" alt="Kompass Pakistan">
             </div>
 
+            <div class="brand-copy">
+                <h2>Assets &amp; access, approved online.</h2>
+                <p>Request laptops, system access and folder permissions. Your HOD and the administrator
+                    review every request, and you are notified by email at each step.</p>
+                <ul class="brand-points">
+                    <li><span>&#10003;</span> Log in with your employee code</li>
+                    <li><span>&#10003;</span> Two-level approval: HOD, then administrator</li>
+                    <li><span>&#10003;</span> Email updates after every decision</li>
+                    <li><span>&#10003;</span> Your asset and access record in one place</li>
+                </ul>
+            </div>
+
+            <small class="brand-foot">Internal system &middot; Kompass Pakistan IT Department</small>
+        </div>
+    </aside>
+
+    <!-- Login form -->
+    <section class="form-panel">
+        <a class="back-home" href="/">&larr; Back to home</a>
+
+        <div class="auth-card">
+            <img class="mobile-logo" src="{% static 'assets/kompass-logo.png' %}" alt="Kompass Pakistan">
+
+            <div class="auth-logo">
+                <svg class="app-mark" aria-hidden="true"><use href="#aam-logo"/></svg>
+                <div><strong>Assets &amp; Access</strong><small>Management Forms</small></div>
+            </div>
+
+            <span class="eyebrow">Welcome back</span>
+            <h1>Log in to your account</h1>
+            <p class="sub">Use your employee code and password.</p>
+
+            {% for m in messages %}
+                <div class="alert alert-{{ m.tags|default:'info' }}" role="alert">{{ m }}</div>
+            {% endfor %}
+
+            <form method="post" action="{% url 'login' %}" id="loginForm">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="employee_code">Employee code</label>
+                    <div class="input-wrap">
+                        <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="employee_code" name="employee_code"
+                               placeholder="Enter your employee code"
+                               required autofocus autocomplete="username" autocapitalize="off" spellcheck="false">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <svg class="icon-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                        <input type="password" id="password" name="password"
+                               placeholder="Enter your password"
+                               required autocomplete="current-password">
+                        <button type="button" class="toggle-pw" id="togglePw" aria-label="Show password">Show</button>
+                    </div>
+                </div>
+
+                <label class="remember">
+                    <input type="checkbox" name="remember" id="remember">
+                    Keep me logged in for 14 days
+                </label>
+
+                <button type="submit" class="btn-login">Log in</button>
+            </form>
+
+            <p class="forgot">Forgot your password? Ask the IT Department to reset it.</p>
+
+            <div class="auth-links">
+                New here? <a href="{% url 'signup' %}">Create an account</a>
+            </div>
         </div>
 
-    </main>
+        <p class="legal">&copy; Kompass Pakistan</p>
+    </section>
 
+</main>
+
+<script>
+(function () {
+    var pw = document.getElementById("password");
+    var toggle = document.getElementById("togglePw");
+    var form = document.getElementById("loginForm");
+    var submit = form.querySelector(".btn-login");
+
+    toggle.addEventListener("click", function () {
+        var show = pw.type === "password";
+        pw.type = show ? "text" : "password";
+        toggle.textContent = show ? "Hide" : "Show";
+        toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
+
+    form.addEventListener("submit", function () {      // stop double clicks
+        submit.disabled = true;
+        submit.textContent = "Signing in\u2026";
+    });
+
+    window.addEventListener("pageshow", function (e) { // coming back with the Back button
+        if (e.persisted) { submit.disabled = false; submit.textContent = "Log in"; }
+    });
+})();
+</script>
 </body>
 </html>

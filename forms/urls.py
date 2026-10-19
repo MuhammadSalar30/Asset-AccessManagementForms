@@ -53,6 +53,7 @@ urlpatterns=[
     path("provision/", views.provision_queue, name="provision_queue"),
     path("provision/<uuid:response_id>/", views.provision_detail, name="provision_detail"),
     path("provision/<uuid:response_id>/decide/", views.provision_decide, name="provision_decide"),
+    path("manage/laptops/", views.manage_laptops, name="manage_laptops"),
 
     
 
